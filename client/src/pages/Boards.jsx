@@ -1,0 +1,79 @@
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { api } from '../api';
+
+export default function Boards() {
+  const [boards, setBoards] = useState([]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    api
+      .getBoards()
+      .then(setBoards)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handleDelete(e, board) {
+    e.stopPropagation();
+    if (!window.confirm(`Excluir o quadro "${board.name}"? Isso apaga todas as listas e cartões.`)) return;
+    try {
+      await api.deleteBoard(board.id);
+      setBoards((prev) => prev.filter((b) => b.id !== board.id));
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  return (
+    <div className="page">
+      <header className="topbar">
+        <h1>Meus Quadros</h1>
+        <nav className="topbar-actions">
+          <Link to="/create-board" className="btn primary">Novo Quadro</Link>
+          <Link to="/settings" className="btn" title="Configurações">Configurações</Link>
+        </nav>
+      </header>
+
+      {error && <p className="error">{error}</p>}
+
+      {loading ? (
+        <p>Carregando...</p>
+      ) : boards.length === 0 ? (
+        <div className="empty">
+          <p>Você ainda não tem quadros.</p>
+          <Link to="/create-board" className="btn primary">Criar seu primeiro quadro</Link>
+        </div>
+      ) : (
+        <div className="board-grid">
+          {boards.map((board) => (
+            <div
+              key={board.id}
+              className="board-card"
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate(`/board/${board.id}`)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') navigate(`/board/${board.id}`);
+              }}
+            >
+              <div className="board-card-text">
+                <strong>{board.name}</strong>
+                {board.description && <span>{board.description}</span>}
+              </div>
+              <button
+                className="board-delete"
+                title="Excluir quadro"
+                onClick={(e) => handleDelete(e, board)}
+              >
+                Excluir
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
