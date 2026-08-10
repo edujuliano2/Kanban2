@@ -3,8 +3,12 @@ const fs = require('fs');
 const { DatabaseSync } = require('node:sqlite');
 
 const dataDir = path.join(__dirname, 'data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+try {
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+} catch (err) {
+  console.error('[SQLite] Não foi possível criar o diretório de dados:', err.message);
 }
 
 const db = new DatabaseSync(path.join(dataDir, 'kanban.db'));

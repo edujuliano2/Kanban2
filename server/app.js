@@ -6,12 +6,20 @@ const listRoutes = require('./routes/lists');
 const cardRoutes = require('./routes/cards');
 const settingsRoutes = require('./routes/settings');
 const { asyncHandler } = require('./helpers');
+const db = require('./db');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get('/api/health', (req, res) => res.json({ ok: true }));
+app.get('/api/health', asyncHandler(async (req, res) => {
+  try {
+    await db.get('SELECT 1 AS one');
+    res.json({ ok: true, db: 'ok' });
+  } catch (err) {
+    res.status(500).json({ ok: false, db: 'error', error: err.message });
+  }
+}));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/boards', boardRoutes);
@@ -22,8 +30,10 @@ app.use('/api/settings', settingsRoutes);
 app.use((req, res) => res.status(404).json({ error: 'Rota não encontrada' }));
 
 app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(500).json({ error: 'Erro interno do servidor' });
+  console.error('[API ERRO]', err);
+  res.status(err.status || 500).json({
+    error: err.message || 'Erro interno do servidor'
+  });
 });
 
 module.exports = app;
