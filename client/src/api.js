@@ -37,11 +37,12 @@ export const api = {
   getBoard: (id) => request(`/boards/${id}`),
   deleteBoard: (id) => request(`/boards/${id}`, { method: 'DELETE' }),
 
-  addList: (boardId, title) =>
-    request(`/boards/${boardId}/lists`, { method: 'POST', body: { title } }),
+  addList: (boardId, title, color) =>
+    request(`/boards/${boardId}/lists`, { method: 'POST', body: { title, color } }),
+  updateList: (id, payload) => request(`/lists/${id}`, { method: 'PUT', body: payload }),
   deleteList: (id) => request(`/lists/${id}`, { method: 'DELETE' }),
-  addCard: (listId, title) =>
-    request(`/lists/${listId}/cards`, { method: 'POST', body: { title } }),
+  addCard: (listId, title, color) =>
+    request(`/lists/${listId}/cards`, { method: 'POST', body: { title, color } }),
 
   getCard: (id) => request(`/cards/${id}`),
   updateCard: (id, payload) => request(`/cards/${id}`, { method: 'PUT', body: payload }),

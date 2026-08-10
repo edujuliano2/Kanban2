@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { api } from '../api';
+import { contrastColor } from '../colors';
+import ColorPicker from '../components/ColorPicker';
 
 export default function CardDetail() {
   const { id } = useParams();
@@ -51,6 +53,11 @@ export default function CardDetail() {
     navigate(`/board/${boardId}`);
   }
 
+  function handleColorChange(color) {
+    setCard((prev) => ({ ...prev, color }));
+    api.updateCard(id, { color }).catch(loadCard);
+  }
+
   async function handleComment(e) {
     e.preventDefault();
     if (!comment.trim()) return;
@@ -77,6 +84,7 @@ export default function CardDetail() {
   if (!card) return <div className="page">Carregando...</div>;
 
   const doneCount = card.checklist.filter((i) => i.checked).length;
+  const detailColor = contrastColor(card.color);
 
   return (
     <div className="page">
@@ -85,7 +93,14 @@ export default function CardDetail() {
         <button className="btn danger" onClick={handleDelete}>Excluir Cartão</button>
       </header>
 
-      <div className="card-detail">
+      <div
+        className={`card-detail${card.color ? ' colored' : ''}`}
+        style={
+          card.color
+            ? { backgroundColor: card.color, color: detailColor }
+            : undefined
+        }
+      >
         {editingTitle ? (
           <form
             className="inline-form"
@@ -110,6 +125,11 @@ export default function CardDetail() {
             </button>
           </div>
         )}
+
+        <section className="section">
+          <h2>Cor do Cartão</h2>
+          <ColorPicker value={card.color || ''} onChange={handleColorChange} />
+        </section>
 
         <section className="section">
           <h2>Descrição</h2>

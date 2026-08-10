@@ -121,6 +121,24 @@ const q = (sql, params = []) => pool.query(sql, params);
     await q('INSERT INTO lists (board_id, title, position) VALUES ($1, $2, $3) RETURNING id', [1, 'B', 1]);
   });
 
+  await run('lista com cor', async () => {
+    const r = await q(
+      'INSERT INTO lists (board_id, title, position, color) VALUES ($1, $2, $3, $4) RETURNING id',
+      [1, 'C', 2, '#2196f3']
+    );
+    const row = await q('SELECT * FROM lists WHERE id = $1', [r.rows[0].id]);
+    if (row.rows[0].color !== '#2196f3') throw new Error('cor da lista não salva');
+    await q('UPDATE lists SET color = $1, title = $2 WHERE id = $3', ['#ff9800', 'C2', r.rows[0].id]);
+  });
+
+  await run('cartão com cor', async () => {
+    const r = await q(
+      'INSERT INTO cards (list_id, title, position, color) VALUES ($1, $2, $3, $4) RETURNING id',
+      [1, 'Tarefa cor', 1, '#4caf50']
+    );
+    await q('UPDATE cards SET color = $1 WHERE id = $2', ['#ff5252', r.rows[0].id]);
+  });
+
   await run('mover cartão (update lista/posição)', async () => {
     await q('UPDATE cards SET list_id = $1, position = $2 WHERE id = $3', [2, 0, 1]);
     await q('UPDATE cards SET position = $1 WHERE id = $2', [0, 1]);

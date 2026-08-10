@@ -104,13 +104,16 @@ router.put('/:id', asyncHandler(async (req, res) => {
     return res.status(404).json({ error: 'Cartão não encontrado' });
   }
 
-  const { title, description } = req.body || {};
+  const { title, description, color } = req.body || {};
 
   if (typeof title === 'string' && title.trim()) {
     await db.run('UPDATE cards SET title = ? WHERE id = ?', [title.trim(), req.params.id]);
   }
   if (typeof description === 'string') {
     await db.run('UPDATE cards SET description = ? WHERE id = ?', [description, req.params.id]);
+  }
+  if (typeof color === 'string') {
+    await db.run('UPDATE cards SET color = ? WHERE id = ?', [color || null, req.params.id]);
   }
 
   res.json(await getCardFull(req.params.id));

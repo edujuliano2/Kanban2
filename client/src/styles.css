@@ -282,6 +282,73 @@ textarea {
   gap: 8px;
 }
 
+.list-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.list-dark .list-title,
+.list-dark .list-delete,
+.list-dark .add-card-btn {
+  color: #ffffff;
+}
+
+.list-dark .list-delete:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.list-edit-form {
+  margin-bottom: 6px;
+}
+
+.color-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.color-swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid rgba(9, 30, 66, 0.15);
+  cursor: pointer;
+  padding: 0;
+}
+
+.color-swatch:hover {
+  transform: scale(1.1);
+}
+
+.color-swatch.selected {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(0, 121, 191, 0.35);
+}
+
+.color-swatch:first-child {
+  background-image:
+    linear-gradient(45deg, #000000 25%, transparent 25%, transparent 75%, #000000 75%),
+    linear-gradient(45deg, #000000 25%, #ffffff 25%, #ffffff 75%, #000000 75%);
+  background-size: 10px 10px;
+  background-position: 0 0, 5px 5px;
+}
+
+.card-detail.colored .section h2 {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.card-detail.colored .muted {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.card-detail.colored .btn.text {
+  color: inherit;
+}
+
 .list-delete {
   color: var(--muted);
 }

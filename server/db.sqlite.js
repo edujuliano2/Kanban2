@@ -38,6 +38,7 @@ db.exec(`
     board_id INTEGER NOT NULL,
     title TEXT NOT NULL,
     position INTEGER NOT NULL DEFAULT 0,
+    color TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE
   );
@@ -48,6 +49,7 @@ db.exec(`
     title TEXT NOT NULL,
     description TEXT DEFAULT '',
     position INTEGER NOT NULL DEFAULT 0,
+    color TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE
   );
@@ -69,6 +71,13 @@ db.exec(`
     FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE
   );
 `);
+
+for (const table of ['lists', 'cards']) {
+  const columns = db.prepare(`PRAGMA table_info(${table})`).all();
+  if (!columns.some((col) => col.name === 'color')) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN color TEXT`);
+  }
+}
 
 module.exports = {
   async get(sql, params = []) {

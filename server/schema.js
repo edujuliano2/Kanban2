@@ -21,6 +21,7 @@ const SCHEMA = `
     board_id INTEGER NOT NULL,
     title TEXT NOT NULL,
     position INTEGER NOT NULL DEFAULT 0,
+    color TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE
   );
@@ -31,6 +32,7 @@ const SCHEMA = `
     title TEXT NOT NULL,
     description TEXT DEFAULT '',
     position INTEGER NOT NULL DEFAULT 0,
+    color TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE
   );
