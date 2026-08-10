@@ -10,8 +10,6 @@ const pool = new Pool({
       : undefined
 });
 
-const SCHEMA = require('./schema');
-
 function toPg(sql) {
   let i = 0;
   return sql.replace(/\?/g, () => `$${++i}`);
