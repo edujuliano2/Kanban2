@@ -203,6 +203,9 @@ export default function CardDetail() {
 }
 
 function formatDate(value) {
-  const d = new Date(value.replace(' ', 'T') + 'Z');
+  if (!value) return '';
+  const isIso = /^\d{4}-\d{2}-\d{2}T/.test(value);
+  const d = new Date(isIso ? value : value.replace(' ', 'T') + 'Z');
+  if (Number.isNaN(d.getTime())) return value;
   return d.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 }

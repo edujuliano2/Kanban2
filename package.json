@@ -1,0 +1,24 @@
+{
+  "name": "kanban",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistema Kanban pessoal - monorepo (API + frontend)",
+  "scripts": {
+    "build": "cd client && npm ci && npm run build",
+    "dev": "concurrently -n api,web -c blue,green \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "start": "node server/index.js",
+    "db:init": "node server/init-db.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.13.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1",
+    "dotenv": "^16.4.5",
+    "pg-mem": "^3.0.14"
+  }
+}
