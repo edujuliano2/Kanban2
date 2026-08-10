@@ -1,14 +1,30 @@
 const isProd = process.env.NODE_ENV === 'production' || !!process.env.VERCEL;
 const hasDbUrl = !!process.env.DATABASE_URL;
 
-if (isProd && !hasDbUrl) {
-  const msg = 'DATABASE_URL não configurada no ambiente de produção';
-  module.exports = {
-    async get() { throw new Error(msg); },
-    async all() { throw new Error(msg); },
-    async run() { throw new Error(msg); },
-    async exec() { throw new Error(msg); }
+function failingDriver(message) {
+  const throwIt = async () => {
+    throw new Error(message);
   };
-} else {
-  module.exports = require(hasDbUrl ? './db.pg' : './db.sqlite');
+  return {
+    get: throwIt,
+    all: throwIt,
+    run: throwIt,
+    exec: throwIt
+  };
 }
+
+let driver;
+
+if (hasDbUrl) {
+  try {
+    driver = require('./db.pg');
+  } catch (err) {
+    driver = failingDriver(`Falha ao carregar o driver do banco: ${err.message}`);
+  }
+} else if (isProd) {
+  driver = failingDriver('DATABASE_URL não configurada no ambiente de produção');
+} else {
+  driver = require('./db.sqlite');
+}
+
+module.exports = driver;
