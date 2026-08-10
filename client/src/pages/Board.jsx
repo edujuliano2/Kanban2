@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { api } from '../api';
@@ -24,6 +24,9 @@ export default function Board() {
   const [editTitle, setEditTitle] = useState('');
   const [editColor, setEditColor] = useState('');
 
+  const [moveMenu, setMoveMenu] = useState(null);
+  const dragActiveRef = useRef(0);
+
   async function loadBoard() {
     setLoading(true);
     try {
@@ -41,8 +44,9 @@ export default function Board() {
   }, [id]);
 
   function onDragEnd(result) {
+    if (!result.destination) return;
+
     const { destination, source, draggableId } = result;
-    if (!destination) return;
     if (destination.droppableId === source.droppableId && destination.index === source.index) return;
 
     const sourceListId = Number(source.droppableId);
@@ -117,6 +121,23 @@ export default function Board() {
     }
   }
 
+  function handleMoveCard(cardId, fromListId, targetListId) {
+    setBoard((prev) => {
+      const lists = prev.lists.map((l) => ({ ...l, cards: [...l.cards] }));
+      const source = lists.find((l) => l.id === fromListId);
+      const target = lists.find((l) => l.id === targetListId);
+      const idx = source.cards.findIndex((c) => c.id === cardId);
+      if (idx === -1) return prev;
+      const [moved] = source.cards.splice(idx, 1);
+      target.cards.push(moved);
+      return { ...prev, lists };
+    });
+    setMoveMenu(null);
+    api
+      .moveCard(cardId, targetListId, board.lists.find((l) => l.id === targetListId).cards.length)
+      .catch(() => loadBoard());
+  }
+
   if (loading) return <div className="page">Carregando...</div>;
   if (error) return <div className="page"><p className="error">{error}</p></div>;
   if (!board) return null;
@@ -131,7 +152,10 @@ export default function Board() {
         <Link to="/boards" className="btn">Voltar</Link>
       </header>
 
-      <DragDropContext onDragEnd={onDragEnd}>
+      <DragDropContext
+        onDragStart={() => (dragActiveRef.current = Date.now())}
+        onDragEnd={onDragEnd}
+      >
         <div className="board-body">
           {board.lists.map((list) => {
             const listText = contrastColor(list.color);
@@ -195,20 +219,38 @@ export default function Board() {
                           index={index}
                         >
                           {(dragProvided, dragSnapshot) => (
-                            <button
+                            <div
                               ref={dragProvided.innerRef}
                               {...dragProvided.draggableProps}
                               {...dragProvided.dragHandleProps}
                               className={`card-mini${dragSnapshot.isDragging ? ' dragging' : ''}`}
-                              style={
-                                card.color
+                              style={{
+                                ...dragProvided.draggableProps.style,
+                                ...(card.color
                                   ? { backgroundColor: card.color, color: contrastColor(card.color) }
-                                  : undefined
-                              }
-                              onClick={() => navigate(`/board/card/${card.id}`)}
+                                  : {}),
+                              }}
+                              onClick={() => {
+                                if (Date.now() - dragActiveRef.current < 400) return;
+                                navigate(`/board/card/${card.id}`);
+                              }}
                             >
-                              {card.title}
-                            </button>
+                              <span className="card-mini-title">{card.title}</span>
+                              <button
+                                type="button"
+                                className="card-mini-move-btn"
+                                title="Mover para lista..."
+                                aria-label="Mover para lista"
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onTouchStart={(e) => e.stopPropagation()}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setMoveMenu({ card, fromListId: list.id });
+                                }}
+                              >
+                                ⋯
+                              </button>
+                            </div>
                           )}
                         </Draggable>
                       ))}
@@ -274,6 +316,36 @@ export default function Board() {
           )}
         </div>
       </DragDropContext>
+
+      {moveMenu && (
+        <div className="modal-overlay" onClick={() => setMoveMenu(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Mover "{moveMenu.card.title}" para outra lista</h3>
+            {board.lists
+              .filter((l) => l.id !== moveMenu.fromListId)
+              .map((l) => (
+                <button
+                  key={l.id}
+                  type="button"
+                  className="modal-list"
+                  onClick={() => handleMoveCard(moveMenu.card.id, moveMenu.fromListId, l.id)}
+                >
+                  <span
+                    className="modal-list-dot"
+                    style={l.color ? { backgroundColor: l.color } : { backgroundColor: '#ebecf0' }}
+                  />
+                  {l.title}
+                </button>
+              ))}
+            {board.lists.filter((l) => l.id !== moveMenu.fromListId).length === 0 && (
+              <p className="muted">Só existe uma lista neste quadro.</p>
+            )}
+            <button type="button" className="btn" onClick={() => setMoveMenu(null)}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
