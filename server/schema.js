@@ -33,6 +33,7 @@ const SCHEMA = `
     description TEXT DEFAULT '',
     position INTEGER NOT NULL DEFAULT 0,
     color TEXT,
+    remind_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE
   );

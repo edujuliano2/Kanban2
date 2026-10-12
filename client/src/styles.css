@@ -516,6 +516,21 @@ textarea {
   cursor: grabbing;
 }
 
+.card-mini-reminder {
+  flex-shrink: 0;
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: var(--radius);
+  background: rgba(9, 30, 66, 0.1);
+  white-space: nowrap;
+}
+
+.card-mini-reminder.overdue {
+  background: #ff5252;
+  color: #fff;
+}
+
 .new-list {
   background: transparent;
   border: 2px dashed var(--border);
@@ -592,6 +607,28 @@ textarea {
   letter-spacing: 0.5px;
   color: var(--muted);
   margin: 0 0 10px;
+}
+
+.reminder-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 320px;
+}
+
+.reminder-form input {
+  width: 100%;
+}
+
+.reminder-status {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.reminder-status.overdue {
+  color: #ff5252;
+  font-weight: 600;
 }
 
 .checklist {

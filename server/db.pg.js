@@ -20,6 +20,7 @@ async function initPgSchema() {
   await pool.query(`
     ALTER TABLE lists ADD COLUMN IF NOT EXISTS color TEXT;
     ALTER TABLE cards ADD COLUMN IF NOT EXISTS color TEXT;
+    ALTER TABLE cards ADD COLUMN IF NOT EXISTS remind_at TIMESTAMPTZ;
   `);
 }
 

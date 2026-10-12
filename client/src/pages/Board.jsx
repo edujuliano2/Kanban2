@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { api } from '../api';
 import { contrastColor } from '../colors';
+import { formatDateTime, isOverdue } from '../datetime';
 import ColorPicker from '../components/ColorPicker';
 
 export default function Board() {
@@ -236,6 +237,14 @@ export default function Board() {
                               }}
                             >
                               <span className="card-mini-title">{card.title}</span>
+                              {card.remind_at && (
+                                <span
+                                  className={`card-mini-reminder${isOverdue(card.remind_at) ? ' overdue' : ''}`}
+                                  title={`Lembrete: ${formatDateTime(card.remind_at)}`}
+                                >
+                                  ⏰ {formatDateTime(card.remind_at)}
+                                </span>
+                              )}
                               <button
                                 type="button"
                                 className="card-mini-move-btn"

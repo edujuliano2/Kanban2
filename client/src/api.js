@@ -45,6 +45,7 @@ export const api = {
     request(`/lists/${listId}/cards`, { method: 'POST', body: { title, color } }),
 
   getCard: (id) => request(`/cards/${id}`),
+  getReminders: () => request('/cards/reminders'),
   updateCard: (id, payload) => request(`/cards/${id}`, { method: 'PUT', body: payload }),
   deleteCard: (id) => request(`/cards/${id}`, { method: 'DELETE' }),
   moveCard: (cardId, toListId, toIndex) =>

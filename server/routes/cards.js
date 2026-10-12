@@ -92,6 +92,20 @@ router.post('/move', asyncHandler(async (req, res) => {
   res.json({ ok: true });
 }));
 
+router.get('/reminders', asyncHandler(async (req, res) => {
+  const reminders = await db.all(
+    `SELECT cards.id, cards.title, cards.list_id, cards.remind_at,
+            boards.id AS board_id, boards.name AS board_name
+     FROM cards
+     JOIN lists ON lists.id = cards.list_id
+     JOIN boards ON boards.id = lists.board_id
+     WHERE boards.user_id = ? AND cards.remind_at IS NOT NULL
+     ORDER BY cards.remind_at ASC, cards.id ASC`,
+    [req.user.id]
+  );
+  res.json(reminders);
+}));
+
 router.get('/:id', asyncHandler(async (req, res) => {
   if (!(await getOwnedCard(req.params.id, req.user.id))) {
     return res.status(404).json({ error: 'Cartão não encontrado' });
@@ -104,7 +118,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
     return res.status(404).json({ error: 'Cartão não encontrado' });
   }
 
-  const { title, description, color } = req.body || {};
+  const { title, description, color, remind_at } = req.body || {};
 
   if (typeof title === 'string' && title.trim()) {
     await db.run('UPDATE cards SET title = ? WHERE id = ?', [title.trim(), req.params.id]);
@@ -114,6 +128,15 @@ router.put('/:id', asyncHandler(async (req, res) => {
   }
   if (typeof color === 'string') {
     await db.run('UPDATE cards SET color = ? WHERE id = ?', [color || null, req.params.id]);
+  }
+  if (remind_at === null || remind_at === '') {
+    await db.run('UPDATE cards SET remind_at = ? WHERE id = ?', [null, req.params.id]);
+  } else if (typeof remind_at === 'string') {
+    const parsed = new Date(remind_at);
+    if (Number.isNaN(parsed.getTime())) {
+      return res.status(400).json({ error: 'Data do lembrete inválida' });
+    }
+    await db.run('UPDATE cards SET remind_at = ? WHERE id = ?', [parsed.toISOString(), req.params.id]);
   }
 
   res.json(await getCardFull(req.params.id));

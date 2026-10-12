@@ -50,6 +50,7 @@ db.exec(`
     description TEXT DEFAULT '',
     position INTEGER NOT NULL DEFAULT 0,
     color TEXT,
+    remind_at TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE
   );
@@ -77,6 +78,10 @@ for (const table of ['lists', 'cards']) {
   if (!columns.some((col) => col.name === 'color')) {
     db.exec(`ALTER TABLE ${table} ADD COLUMN color TEXT`);
   }
+}
+
+if (!db.prepare('PRAGMA table_info(cards)').all().some((col) => col.name === 'remind_at')) {
+  db.exec('ALTER TABLE cards ADD COLUMN remind_at TEXT');
 }
 
 module.exports = {
