@@ -69,6 +69,7 @@ const SCHEMA = `
     location TEXT DEFAULT '',
     category TEXT DEFAULT 'outro',
     done INTEGER NOT NULL DEFAULT 0,
+    remind_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE,
     FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE SET NULL

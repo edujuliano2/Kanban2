@@ -33,9 +33,11 @@ async function initPgSchema() {
     ALTER TABLE cards ADD COLUMN IF NOT EXISTS location TEXT DEFAULT '';
     ALTER TABLE cards ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'outro';
     ALTER TABLE cards ADD COLUMN IF NOT EXISTS done INTEGER NOT NULL DEFAULT 0;
+    ALTER TABLE cards ADD COLUMN IF NOT EXISTS remind_at TIMESTAMPTZ;
     CREATE INDEX IF NOT EXISTS idx_members_family ON members(family_id);
     CREATE INDEX IF NOT EXISTS idx_boards_family ON boards(family_id);
     CREATE INDEX IF NOT EXISTS idx_cards_event_date ON cards(event_date);
+    CREATE INDEX IF NOT EXISTS idx_cards_remind_at ON cards(remind_at);
     CREATE INDEX IF NOT EXISTS idx_card_members_member ON card_members(member_id);
   `);
 }

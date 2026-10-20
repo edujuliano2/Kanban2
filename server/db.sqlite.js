@@ -86,6 +86,7 @@ db.exec(`
     location TEXT DEFAULT '',
     category TEXT DEFAULT 'outro',
     done INTEGER NOT NULL DEFAULT 0,
+    remind_at TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE
   );
@@ -125,7 +126,8 @@ const cardColumns = {
   end_time: 'TEXT',
   location: "TEXT DEFAULT ''",
   category: "TEXT DEFAULT 'outro'",
-  done: 'INTEGER NOT NULL DEFAULT 0'
+  done: 'INTEGER NOT NULL DEFAULT 0',
+  remind_at: 'TEXT'
 };
 
 const existingCardColumns = db.prepare('PRAGMA table_info(cards)').all();
@@ -172,6 +174,7 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_members_family ON members(family_id);
   CREATE INDEX IF NOT EXISTS idx_boards_family ON boards(family_id);
   CREATE INDEX IF NOT EXISTS idx_cards_event_date ON cards(event_date);
+  CREATE INDEX IF NOT EXISTS idx_cards_remind_at ON cards(remind_at);
   CREATE INDEX IF NOT EXISTS idx_card_members_member ON card_members(member_id);
 `);
 

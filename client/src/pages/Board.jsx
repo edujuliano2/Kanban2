@@ -5,6 +5,7 @@ import { api } from '../api';
 import { useAuth } from '../auth';
 import { contrastColor, memberColor } from '../colors';
 import { CATEGORIES, categoryOf } from '../categories';
+import { formatDateTime, isOverdue } from '../datetime';
 import MemberStack from '../components/MemberStack';
 import MemberPicker from '../components/MemberPicker';
 import { inviteMessage } from '../invites';
@@ -850,6 +851,15 @@ function EventMini({ card, index, members = [], dragActiveRef, onOpen, onToggleD
           </div>
 
           <span className="event-title">{card.title}</span>
+
+          {card.remind_at && (
+            <span
+              className={`event-reminder${isOverdue(card.remind_at) ? ' overdue' : ''}`}
+              title={`Lembrete: ${formatDateTime(card.remind_at)}`}
+            >
+              ⏰ {formatDateTime(card.remind_at)}
+            </span>
+          )}
 
           {(members.length > 0 || card.location) && (
             <div className="event-meta">

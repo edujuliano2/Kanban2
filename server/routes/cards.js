@@ -117,6 +117,43 @@ router.post('/move', asyncHandler(async (req, res) => {
   res.json({ ok: true });
 }));
 
+router.get('/reminders', asyncHandler(async (req, res) => {
+  const member = await db.get(
+    'SELECT id FROM members WHERE linked_user_id = ? LIMIT 1',
+    [req.user.id]
+  );
+
+  if (!member) return res.json([]);
+
+  const reminders = await db.all(
+    `SELECT cards.id, cards.title, cards.remind_at, cards.event_date,
+            cards.start_time, cards.list_id,
+            boards.id AS board_id, boards.name AS board_name
+     FROM cards
+     JOIN lists ON lists.id = cards.list_id
+     JOIN boards ON boards.id = lists.board_id
+     WHERE boards.family_id = ?
+       AND cards.remind_at IS NOT NULL
+       AND (
+         EXISTS (
+           SELECT 1 FROM card_members
+           WHERE card_members.card_id = cards.id
+             AND card_members.member_id = ?
+         )
+         OR (
+           cards.member_id = ?
+           AND NOT EXISTS (
+             SELECT 1 FROM card_members WHERE card_members.card_id = cards.id
+           )
+         )
+       )
+     ORDER BY cards.remind_at ASC, cards.id ASC`,
+    [req.user.family_id, member.id, member.id]
+  );
+
+  res.json(reminders);
+}));
+
 router.get('/:id', asyncHandler(async (req, res) => {
   if (!(await getFamilyCard(req.params.id, req.user.family_id))) {
     return res.status(404).json({ error: 'Atividade não encontrada' });
@@ -189,6 +226,21 @@ router.put('/:id', asyncHandler(async (req, res) => {
 
   if (hasOwn(body, 'done')) {
     set('done', body.done ? 1 : 0);
+  }
+
+  if (hasOwn(body, 'remind_at')) {
+    const value = body.remind_at;
+    if (value === null || value === '') {
+      set('remind_at', null);
+    } else if (typeof value === 'string') {
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) {
+        return res.status(400).json({ error: 'Data do lembrete inválida' });
+      }
+      set('remind_at', parsed.toISOString());
+    } else {
+      return res.status(400).json({ error: 'Data do lembrete inválida' });
+    }
   }
 
   let memberIds = null;

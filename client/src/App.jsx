@@ -9,6 +9,7 @@ import Board from './pages/Board';
 import CardDetail from './pages/CardDetail';
 import Family from './pages/Family';
 import Settings from './pages/Settings';
+import ReminderNotifier from './components/ReminderNotifier';
 
 function RequireAuth({ children }) {
   const { user, loading } = useAuth();
@@ -106,6 +107,7 @@ export default function App() {
           />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <ReminderNotifier />
       </BrowserRouter>
     </AuthProvider>
   );

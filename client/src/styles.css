@@ -1901,3 +1901,43 @@ hr {
     display: none;
   }
 }
+
+/* ---------- Lembretes ---------- */
+
+.event-reminder {
+  align-self: flex-start;
+  font-size: 10.5px;
+  line-height: 1;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: rgba(16, 24, 40, 0.08);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.event-reminder.overdue {
+  background: var(--danger);
+  color: #fff;
+}
+
+.reminder-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 320px;
+}
+
+.reminder-form input {
+  width: 100%;
+}
+
+.reminder-status {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.reminder-status.overdue {
+  color: var(--danger);
+  font-weight: 600;
+}

@@ -6,6 +6,7 @@ import { CATEGORIES, categoryOf } from '../categories';
 import MemberStack from '../components/MemberStack';
 import MemberPicker from '../components/MemberPicker';
 import { inviteMessage } from '../invites';
+import { formatDateTime, toLocalInput, isOverdue } from '../datetime';
 import { formatDateLong, formatTimestamp } from '../dates';
 
 export default function CardDetail() {
@@ -27,6 +28,8 @@ export default function CardDetail() {
 
   const [comment, setComment] = useState('');
   const [checkItem, setCheckItem] = useState('');
+  const [remindInput, setRemindInput] = useState('');
+  const [savingRemind, setSavingRemind] = useState(false);
 
   async function loadCard() {
     try {
@@ -36,6 +39,7 @@ export default function CardDetail() {
       setTitle(data.title);
       setDesc(data.description || '');
       setLocation(data.location || '');
+      setRemindInput(toLocalInput(data.remind_at));
       setError('');
     } catch (err) {
       setError(err.message);
@@ -78,6 +82,40 @@ export default function CardDetail() {
   function saveLocation() {
     if (location !== (card.location || '')) {
       patch({ location });
+    }
+  }
+
+  async function saveReminder() {
+    if (!remindInput) return clearReminder();
+
+    setSavingRemind(true);
+    setError('');
+    try {
+      const updated = await api.updateCard(id, {
+        remind_at: new Date(remindInput).toISOString()
+      });
+      setCard(updated);
+      setRemindInput(toLocalInput(updated.remind_at));
+      setNotice('Lembrete salvo.');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSavingRemind(false);
+    }
+  }
+
+  async function clearReminder() {
+    setSavingRemind(true);
+    setError('');
+    try {
+      const updated = await api.updateCard(id, { remind_at: null });
+      setCard(updated);
+      setRemindInput('');
+      setNotice('Lembrete removido.');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSavingRemind(false);
     }
   }
 
@@ -362,6 +400,43 @@ export default function CardDetail() {
               {card.description || (
                 <span className="muted">Sem detalhes. Clique para escrever.</span>
               )}
+            </p>
+          )}
+        </section>
+
+        <section className="section">
+          <h3>Lembrete</h3>
+          <div className="reminder-form">
+            <input
+              type="datetime-local"
+              value={remindInput}
+              onChange={(e) => setRemindInput(e.target.value)}
+            />
+            <div className="row gap">
+              <button
+                type="button"
+                className="btn primary small"
+                disabled={savingRemind || !remindInput}
+                onClick={saveReminder}
+              >
+                Salvar lembrete
+              </button>
+              {card.remind_at && (
+                <button
+                  type="button"
+                  className="btn small"
+                  disabled={savingRemind}
+                  onClick={clearReminder}
+                >
+                  Remover
+                </button>
+              )}
+            </div>
+          </div>
+          {card.remind_at && (
+            <p className={`reminder-status${isOverdue(card.remind_at) ? ' overdue' : ''}`}>
+              {isOverdue(card.remind_at) ? 'Vencido' : 'Agendado para'}:{' '}
+              {formatDateTime(card.remind_at)}
             </p>
           )}
         </section>

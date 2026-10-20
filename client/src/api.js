@@ -59,6 +59,7 @@ export const api = {
   deleteMember: (id) => request(`/members/${id}`, { method: 'DELETE' }),
 
   getCard: (id) => request(`/cards/${id}`),
+  getReminders: () => request('/cards/reminders'),
   updateCard: (id, payload) => request(`/cards/${id}`, { method: 'PUT', body: payload }),
   deleteCard: (id) => request(`/cards/${id}`, { method: 'DELETE' }),
   addComment: (id, content) =>
