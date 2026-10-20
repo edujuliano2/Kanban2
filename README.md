@@ -8,13 +8,16 @@ Aplicação de agenda familiar que mantém a essência visual de um Kanban: cada
 - **Cadastrar a família** em `Família`, com nome, papel (mãe, pai, filha...), cor, emoji e e-mail para convites.
 - **Filtrar a agenda por pessoa** ou por categoria (escola, saúde, esporte, trabalho, lazer etc.).
 - **Visualizar a semana em colunas** de segunda a domingo, com navegação entre semanas.
-- **Visão Calendário** com todos os eventos do mês agrupados por dia, mostrando somente os dias que têm compromissos.
+- **Visão Calendário** com todos os eventos e tarefas do mês agrupados por dia, mostrando somente os dias que têm atividades.
 - **Arrastar compromissos entre os dias** para mudar a data. A coluna **Sem data** funciona como caixa de entrada para organizar depois.
 - **Eventos com vários participantes**: uma consulta, viagem ou programa pode envolver mais de uma pessoa da família.
-- **Convites de calendário por e-mail**: ao criar a atividade, o sistema envia um arquivo `.ics` para o e-mail de cada participante, permitindo adicionar o compromisso à agenda do Gmail, Outlook etc.
+- **Dois tipos de card**:
+  - **Evento**: tem data, horário, participantes e pode enviar convite de calendário.
+  - **Tarefa**: tem um dia, não tem horário e pode ser compartilhada ou direcionada a outro membro — inclusive sem incluir quem criou.
+- **Convites de calendário por e-mail**: ao criar um evento, o sistema envia um arquivo `.ics` para o e-mail de cada participante, permitindo adicionar o compromisso à agenda do Gmail, Outlook etc.
 - **Reenviar convites** ou **cancelar** a atividade (o cancelamento também é enviado por e-mail).
 - **Checklist "O que levar / preparar"** e **recados da família** em cada atividade.
-- **Resumo do dia** na tela inicial, reunindo compromissos de todas as agendas.
+- **Resumo do dia** na tela inicial, reunindo eventos e tarefas de todas as agendas.
 - **Múltiplas agendas** (por exemplo, "Rotina da família", "Escola das meninas", "Trabalho"), com nome e descrição editáveis.
 
 ## Como funcionam os logins da família

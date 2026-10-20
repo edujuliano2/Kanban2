@@ -191,6 +191,25 @@ const q = (sql, params = []) => pool.query(sql, params);
     if (!row.rows.length) throw new Error('agenda não retornou o compromisso');
   });
 
+  await run('tarefa com tipo e sem horário', async () => {
+    const r = await q(
+      `INSERT INTO cards (list_id, title, position, card_type, event_date)
+       VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+      [1, 'Tarefa', 0, 'task', '2026-10-22']
+    );
+    const row = await q(
+      'SELECT card_type, event_date, start_time, end_time FROM cards WHERE id = $1',
+      [r.rows[0].id]
+    );
+    if (
+      row.rows[0].card_type !== 'task' ||
+      row.rows[0].start_time !== null ||
+      row.rows[0].end_time !== null
+    ) {
+      throw new Error('tarefa não salva corretamente');
+    }
+  });
+
   await run('família, login vinculado e múltiplos participantes', async () => {
     const family = await q(
       'INSERT INTO families (name, invite_code, created_by) VALUES ($1, $2, $3) RETURNING id',

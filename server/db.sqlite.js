@@ -79,6 +79,7 @@ db.exec(`
     description TEXT DEFAULT '',
     position INTEGER NOT NULL DEFAULT 0,
     color TEXT,
+    card_type TEXT NOT NULL DEFAULT 'event',
     member_id INTEGER REFERENCES members(id) ON DELETE SET NULL,
     event_date TEXT,
     start_time TEXT,
@@ -120,6 +121,7 @@ db.exec(`
 // Migrações de colunas para bancos já existentes.
 const cardColumns = {
   color: 'TEXT',
+  card_type: "TEXT NOT NULL DEFAULT 'event'",
   member_id: 'INTEGER',
   event_date: 'TEXT',
   start_time: 'TEXT',
@@ -175,6 +177,7 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_boards_family ON boards(family_id);
   CREATE INDEX IF NOT EXISTS idx_cards_event_date ON cards(event_date);
   CREATE INDEX IF NOT EXISTS idx_cards_remind_at ON cards(remind_at);
+  CREATE INDEX IF NOT EXISTS idx_cards_type ON cards(card_type);
   CREATE INDEX IF NOT EXISTS idx_card_members_member ON card_members(member_id);
 `);
 

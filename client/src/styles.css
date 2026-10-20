@@ -2254,3 +2254,138 @@ hr {
     margin-left: 0;
   }
 }
+
+/* ---------- Eventos x tarefas ---------- */
+
+.filter-selects {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.type-toggle {
+  display: inline-flex;
+  gap: 3px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 3px;
+  margin-bottom: 6px;
+}
+
+.type-toggle button {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.type-toggle button:hover {
+  color: var(--text);
+}
+
+.type-toggle button.active {
+  background: #fff;
+  color: var(--primary-dark);
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.12);
+}
+
+.type-hint {
+  margin: 0 0 14px;
+}
+
+.quick-add-type {
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--primary-dark);
+}
+
+.quick-add-type.task {
+  color: var(--success);
+}
+
+.quick-add-label {
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--muted);
+}
+
+.quick-add-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.quick-add-buttons .add-card-btn {
+  flex: 1;
+  text-align: left;
+}
+
+.event-mini.is-task {
+  background: #fbfdfb;
+}
+
+.event-time.task {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.calendar-event.is-task {
+  background: #fbfdfb;
+}
+
+.calendar-event-time.task {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.type-pill {
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.type-pill.event {
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+}
+
+.type-pill.task {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.today-time.task {
+  display: inline-block;
+  background: var(--success-soft);
+  color: var(--success);
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+
+@media (max-width: 768px) {
+  .filter-selects {
+    width: 100%;
+  }
+
+  .filter-selects .category-filter {
+    flex: 1;
+  }
+
+  .filter-selects select {
+    width: 100%;
+  }
+}

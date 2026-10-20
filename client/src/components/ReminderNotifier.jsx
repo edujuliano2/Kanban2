@@ -40,7 +40,8 @@ export default function ReminderNotifier() {
           notifiedRef.current[r.id] = r.remind_at;
           localStorage.setItem(NOTIFIED_KEY, JSON.stringify(notifiedRef.current));
           if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-            const n = new Notification('Lembrete: ' + r.title, {
+            const label = r.card_type === 'task' ? 'tarefa' : 'evento';
+            const n = new Notification(`Lembrete de ${label}: ${r.title}`, {
               body: at.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }),
               tag: `card-reminder-${r.id}`
             });

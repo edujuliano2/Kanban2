@@ -6,7 +6,8 @@ const {
   hasOwn,
   cleanText,
   optionalDate,
-  optionalTime
+  optionalTime,
+  parseCardType
 } = require('../event-fields');
 const {
   parseMemberIds,
@@ -106,6 +107,11 @@ router.post('/:id/cards', asyncHandler(async (req, res) => {
     return res.status(400).json({ error: 'O título da atividade é obrigatório' });
   }
 
+  const type = hasOwn(body, 'type') ? parseCardType(body.type) : 'event';
+  if (!type) {
+    return res.status(400).json({ error: 'Tipo de card inválido' });
+  }
+
   const rawMemberIds = hasOwn(body, 'member_ids')
     ? body.member_ids
     : body.member_id
@@ -128,17 +134,18 @@ router.post('/:id/cards', asyncHandler(async (req, res) => {
 
   const result = await db.run(
     `INSERT INTO cards
-      (list_id, title, description, position, member_id, event_date, start_time, end_time, location, category)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
+      (list_id, title, description, position, card_type, member_id, event_date, start_time, end_time, location, category)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
     [
       listId,
       title,
       cleanText(body.description) || '',
       Number(countRow.count) || 0,
+      type,
       memberIds[0] || null,
       optionalDate(body.event_date) ?? null,
-      optionalTime(body.start_time) ?? null,
-      optionalTime(body.end_time) ?? null,
+      type === 'event' ? optionalTime(body.start_time) ?? null : null,
+      type === 'event' ? optionalTime(body.end_time) ?? null : null,
       cleanText(body.location, 200) || '',
       cleanText(body.category, 40) || 'outro'
     ]
@@ -150,7 +157,7 @@ router.post('/:id/cards', asyncHandler(async (req, res) => {
   let card = await db.get('SELECT * FROM cards WHERE id = ?', [cardId]);
   card = { ...card, board_id: board.id, board_name: board.name };
 
-  if (body.send_invites !== false) {
+  if (type === 'event' && body.send_invites !== false) {
     const inviteMembers = await getMembersByIds(memberIds, req.user.family_id);
     card.invite = await sendCalendarInvites({
       card,

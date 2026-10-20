@@ -195,6 +195,7 @@ export default function CardDetail() {
     .map((memberId) => members.find((item) => item.id === memberId))
     .filter(Boolean);
   const accent = memberColor(participants[0]?.color);
+  const isTask = (card.card_type || 'event') === 'task';
   const category = categoryOf(card.category);
   const doneCount = card.checklist.filter((item) => item.checked).length;
   const progress = card.checklist.length
@@ -266,6 +267,9 @@ export default function CardDetail() {
               <>
                 <h2>{card.title}</h2>
                 <div className="event-detail-sub">
+                  <span className={`type-pill ${isTask ? 'task' : 'event'}`}>
+                    {isTask ? '✅ Tarefa' : '📅 Evento'}
+                  </span>
                   <span>{category.icon} {category.label}</span>
                   {card.event_date && <span>📅 {formatDateLong(card.event_date)}</span>}
                   {card.start_time && (
@@ -290,7 +294,18 @@ export default function CardDetail() {
 
         <div className="form-grid detail-grid">
           <label className="field">
-            <span>Data</span>
+            <span>Tipo</span>
+            <select
+              value={card.card_type || 'event'}
+              onChange={(e) => patch({ type: e.target.value })}
+            >
+              <option value="event">📅 Evento</option>
+              <option value="task">✅ Tarefa</option>
+            </select>
+          </label>
+
+          <label className="field">
+            <span>{isTask ? 'Dia da tarefa' : 'Data'}</span>
             <input
               type="date"
               value={card.event_date || ''}
@@ -298,23 +313,27 @@ export default function CardDetail() {
             />
           </label>
 
-          <label className="field">
-            <span>Início</span>
-            <input
-              type="time"
-              value={card.start_time || ''}
-              onChange={(e) => patch({ start_time: e.target.value || null })}
-            />
-          </label>
+          {!isTask && (
+            <>
+              <label className="field">
+                <span>Início</span>
+                <input
+                  type="time"
+                  value={card.start_time || ''}
+                  onChange={(e) => patch({ start_time: e.target.value || null })}
+                />
+              </label>
 
-          <label className="field">
-            <span>Fim</span>
-            <input
-              type="time"
-              value={card.end_time || ''}
-              onChange={(e) => patch({ end_time: e.target.value || null })}
-            />
-          </label>
+              <label className="field">
+                <span>Fim</span>
+                <input
+                  type="time"
+                  value={card.end_time || ''}
+                  onChange={(e) => patch({ end_time: e.target.value || null })}
+                />
+              </label>
+            </>
+          )}
 
           <label className="field">
             <span>Categoria</span>
@@ -343,25 +362,27 @@ export default function CardDetail() {
         </div>
 
         <div className="field participant-field">
-          <span>Quem participa</span>
+          <span>{isTask ? 'Responsáveis pela tarefa' : 'Quem participa'}</span>
           <MemberPicker
             members={members}
             selected={participantIds}
             onToggle={toggleMember}
           />
-          <div className="invite-actions">
-            <button
-              type="button"
-              className="btn small"
-              onClick={resendInvites}
-              disabled={sendingInvites}
-            >
-              📨 {sendingInvites ? 'Enviando...' : 'Reenviar convites'}
-            </button>
-            <span className="muted small">
-              Envia o convite de calendário para o e-mail cadastrado de cada participante.
-            </span>
-          </div>
+          {!isTask && (
+            <div className="invite-actions">
+              <button
+                type="button"
+                className="btn small"
+                onClick={resendInvites}
+                disabled={sendingInvites}
+              >
+                📨 {sendingInvites ? 'Enviando...' : 'Reenviar convites'}
+              </button>
+              <span className="muted small">
+                Envia o convite de calendário para o e-mail cadastrado de cada participante.
+              </span>
+            </div>
+          )}
         </div>
 
         <section className="section">

@@ -25,4 +25,15 @@ function optionalId(value) {
   return Number.isInteger(id) && id > 0 ? id : undefined;
 }
 
-module.exports = { hasOwn, cleanText, optionalDate, optionalTime, optionalId };
+function parseCardType(value) {
+  return value === 'event' || value === 'task' ? value : undefined;
+}
+
+module.exports = {
+  hasOwn,
+  cleanText,
+  optionalDate,
+  optionalTime,
+  optionalId,
+  parseCardType
+};

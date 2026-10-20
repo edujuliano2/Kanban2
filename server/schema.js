@@ -62,6 +62,7 @@ const SCHEMA = `
     description TEXT DEFAULT '',
     position INTEGER NOT NULL DEFAULT 0,
     color TEXT,
+    card_type TEXT NOT NULL DEFAULT 'event',
     member_id INTEGER,
     event_date TEXT,
     start_time TEXT,

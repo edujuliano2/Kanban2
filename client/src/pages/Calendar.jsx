@@ -39,6 +39,7 @@ export default function Calendar() {
   const [members, setMembers] = useState([]);
   const [filterMember, setFilterMember] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [filterType, setFilterType] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -74,6 +75,7 @@ export default function Calendar() {
   const memberById = useMemo(() => new Map(members.map((member) => [member.id, member])), [members]);
 
   const filteredEvents = events.filter((event) => {
+    if (filterType !== 'all' && (event.card_type || 'event') !== filterType) return false;
     if (filterMember !== 'all' && !eventMemberIds(event).includes(Number(filterMember))) {
       return false;
     }
@@ -150,7 +152,7 @@ export default function Calendar() {
         <div>
           <h1>Calendário da família</h1>
           <p className="muted">
-            Todos os eventos do mês, mostrando somente os dias que têm compromissos.
+            Todos os eventos e tarefas do mês, mostrando somente os dias que têm atividades.
           </p>
         </div>
         <nav className="topbar-actions">
@@ -181,7 +183,7 @@ export default function Calendar() {
             <strong>{monthLabel(monthStart)}</strong>
             <span>
               {filteredEvents.length}{' '}
-              {filteredEvents.length === 1 ? 'evento' : 'eventos'} em{' '}
+              {filteredEvents.length === 1 ? 'atividade' : 'atividades'} em{' '}
               {days.length} {days.length === 1 ? 'dia' : 'dias'}
             </span>
           </div>
@@ -237,17 +239,27 @@ export default function Calendar() {
             })}
           </div>
 
-          <label className="category-filter">
-            <span className="sr-only">Filtrar por categoria</span>
-            <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
-              <option value="all">Todas as categorias</option>
-              {CATEGORIES.map((category) => (
-                <option key={category.value} value={category.value}>
-                  {category.icon} {category.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="filter-selects">
+            <label className="category-filter">
+              <span className="sr-only">Filtrar por tipo</span>
+              <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+                <option value="all">Eventos e tarefas</option>
+                <option value="event">Somente eventos</option>
+                <option value="task">Somente tarefas</option>
+              </select>
+            </label>
+            <label className="category-filter">
+              <span className="sr-only">Filtrar por categoria</span>
+              <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
+                <option value="all">Todas as categorias</option>
+                {CATEGORIES.map((category) => (
+                  <option key={category.value} value={category.value}>
+                    {category.icon} {category.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
       </div>
 
@@ -256,18 +268,19 @@ export default function Calendar() {
       ) : days.length === 0 ? (
         <div className="calendar-empty">
           <span className="calendar-empty-icon" aria-hidden="true">🗓️</span>
-          <h2>Nenhum evento neste mês</h2>
+          <h2>Nenhuma atividade neste mês</h2>
           <p className="muted">
-            Não há compromissos em {monthLabel(monthStart).toLowerCase()} com os filtros atuais.
+            Não há atividades em {monthLabel(monthStart).toLowerCase()} com os filtros atuais.
           </p>
           <div className="row gap calendar-empty-actions">
-            {(filterMember !== 'all' || filterCategory !== 'all') && (
+            {(filterMember !== 'all' || filterCategory !== 'all' || filterType !== 'all') && (
               <button
                 type="button"
                 className="btn"
                 onClick={() => {
                   setFilterMember('all');
                   setFilterCategory('all');
+                  setFilterType('all');
                 }}
               >
                 Limpar filtros
@@ -284,11 +297,14 @@ export default function Calendar() {
                 Voltar para este mês
               </button>
             )}
-            {isCurrentMonth && filterMember === 'all' && filterCategory === 'all' && (
-              <button type="button" className="btn primary" onClick={() => navigate('/boards')}>
-                Ir para as agendas
-              </button>
-            )}
+            {isCurrentMonth &&
+              filterMember === 'all' &&
+              filterCategory === 'all' &&
+              filterType === 'all' && (
+                <button type="button" className="btn primary" onClick={() => navigate('/boards')}>
+                  Ir para as agendas
+                </button>
+              )}
           </div>
         </div>
       ) : (
@@ -315,6 +331,7 @@ export default function Calendar() {
                 <div className="calendar-events">
                   {day.events.map((event) => {
                     const category = categoryOf(event.category);
+                    const isTask = (event.card_type || 'event') === 'task';
                     const eventMembers = eventMemberIds(event)
                       .map((memberId) => memberById.get(memberId))
                       .filter(Boolean);
@@ -323,7 +340,9 @@ export default function Calendar() {
                     return (
                       <article
                         key={event.id}
-                        className={`calendar-event${event.done ? ' done' : ''}`}
+                        className={`calendar-event${isTask ? ' is-task' : ''}${
+                          event.done ? ' done' : ''
+                        }`}
                         style={{ borderLeftColor: accent }}
                         role="button"
                         tabIndex={0}
@@ -333,13 +352,21 @@ export default function Calendar() {
                         }}
                       >
                         <div className="calendar-event-top">
-                          <span className={`calendar-event-time${event.start_time ? '' : ' all-day'}`}>
-                            {event.start_time
-                              ? `${formatClock(event.start_time)}${
-                                  event.end_time ? `–${formatClock(event.end_time)}` : ''
-                                }`
-                              : 'Dia todo'}
-                          </span>
+                          {isTask ? (
+                            <span className="calendar-event-time task">Tarefa</span>
+                          ) : (
+                            <span
+                              className={`calendar-event-time${
+                                event.start_time ? '' : ' all-day'
+                              }`}
+                            >
+                              {event.start_time
+                                ? `${formatClock(event.start_time)}${
+                                    event.end_time ? `–${formatClock(event.end_time)}` : ''
+                                  }`
+                                : 'Dia todo'}
+                            </span>
+                          )}
                           <span className="calendar-event-category" title={category.label}>
                             {category.icon} {category.label}
                           </span>

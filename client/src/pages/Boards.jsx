@@ -87,7 +87,9 @@ export default function Boards() {
               <span className="today-count">
                 {pendingToday.length === 0
                   ? 'Dia livre'
-                  : `${pendingToday.length} ${pendingToday.length === 1 ? 'compromisso' : 'compromissos'}`}
+                  : `${pendingToday.length} ${
+                      pendingToday.length === 1 ? 'atividade' : 'atividades'
+                    }`}
               </span>
             </div>
 
@@ -105,10 +107,11 @@ export default function Boards() {
             )}
 
             {todayEvents.length === 0 ? (
-              <p className="today-empty">Nenhum compromisso hoje. Bom momento para respirar. 🌿</p>
+              <p className="today-empty">Nenhuma atividade hoje. Bom momento para respirar. 🌿</p>
             ) : (
               <ul className="today-list">
                 {todayEvents.map((event) => {
+                  const isTask = (event.card_type || 'event') === 'task';
                   const eventMemberIds = event.member_ids?.length
                     ? event.member_ids
                     : event.member_id
@@ -129,8 +132,12 @@ export default function Boards() {
                         if (e.key === 'Enter') navigate(`/board/card/${event.id}`);
                       }}
                     >
-                      <span className="today-time">
-                        {event.start_time ? formatClock(event.start_time) : 'Dia todo'}
+                      <span className={`today-time${isTask ? ' task' : ''}`}>
+                        {isTask
+                          ? 'Tarefa'
+                          : event.start_time
+                            ? formatClock(event.start_time)
+                            : 'Dia todo'}
                       </span>
                       <MemberStack members={eventMembers} max={3} />
                       <span className="today-event-title">

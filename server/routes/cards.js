@@ -6,7 +6,8 @@ const {
   hasOwn,
   cleanText,
   optionalDate,
-  optionalTime
+  optionalTime,
+  parseCardType
 } = require('../event-fields');
 const {
   parseMemberIds,
@@ -127,7 +128,7 @@ router.get('/reminders', asyncHandler(async (req, res) => {
 
   const reminders = await db.all(
     `SELECT cards.id, cards.title, cards.remind_at, cards.event_date,
-            cards.start_time, cards.list_id,
+            cards.start_time, cards.card_type, cards.list_id,
             boards.id AS board_id, boards.name AS board_name
      FROM cards
      JOIN lists ON lists.id = cards.list_id
@@ -176,6 +177,16 @@ router.put('/:id', asyncHandler(async (req, res) => {
     params.push(value);
   }
 
+  let effectiveType = card.card_type || 'event';
+  if (hasOwn(body, 'type')) {
+    const parsedType = parseCardType(body.type);
+    if (!parsedType) {
+      return res.status(400).json({ error: 'Tipo de card inválido' });
+    }
+    effectiveType = parsedType;
+    set('card_type', parsedType);
+  }
+
   if (hasOwn(body, 'title')) {
     const value = cleanText(body.title, 200);
     if (!value) {
@@ -196,7 +207,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
     set('event_date', date);
   }
 
-  if (hasOwn(body, 'start_time')) {
+  if (hasOwn(body, 'start_time') && effectiveType === 'event') {
     const time = optionalTime(body.start_time);
     if (time === undefined) {
       return res.status(400).json({ error: 'Horário inicial inválido' });
@@ -204,7 +215,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
     set('start_time', time);
   }
 
-  if (hasOwn(body, 'end_time')) {
+  if (hasOwn(body, 'end_time') && effectiveType === 'event') {
     const time = optionalTime(body.end_time);
     if (time === undefined) {
       return res.status(400).json({ error: 'Horário final inválido' });
@@ -226,6 +237,11 @@ router.put('/:id', asyncHandler(async (req, res) => {
 
   if (hasOwn(body, 'done')) {
     set('done', body.done ? 1 : 0);
+  }
+
+  if (hasOwn(body, 'type') && effectiveType === 'task') {
+    set('start_time', null);
+    set('end_time', null);
   }
 
   if (hasOwn(body, 'remind_at')) {
@@ -266,7 +282,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
 
   let fullCard = await getCardFull(card.id);
 
-  if (body.send_invites) {
+  if (body.send_invites && effectiveType === 'event') {
     const inviteMembers = await getCardMembers(card.id, req.user.family_id);
     fullCard.invite = await sendCalendarInvites({
       card: fullCard,
@@ -284,12 +300,15 @@ router.delete('/:id', asyncHandler(async (req, res) => {
     return res.status(404).json({ error: 'Atividade não encontrada' });
   }
 
-  const inviteMembers = await getCardMembers(card.id, req.user.family_id);
-  const invite = await sendCalendarInvites({
-    card,
-    members: inviteMembers,
-    method: 'CANCEL'
-  });
+  let invite = null;
+  if ((card.card_type || 'event') === 'event') {
+    const inviteMembers = await getCardMembers(card.id, req.user.family_id);
+    invite = await sendCalendarInvites({
+      card,
+      members: inviteMembers,
+      method: 'CANCEL'
+    });
+  }
 
   await db.run('DELETE FROM cards WHERE id = ?', [card.id]);
   res.json({ ok: true, invite });

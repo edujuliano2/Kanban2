@@ -26,6 +26,7 @@ async function initPgSchema() {
     ALTER TABLE boards ADD COLUMN IF NOT EXISTS family_id INTEGER;
     ALTER TABLE lists ADD COLUMN IF NOT EXISTS color TEXT;
     ALTER TABLE cards ADD COLUMN IF NOT EXISTS color TEXT;
+    ALTER TABLE cards ADD COLUMN IF NOT EXISTS card_type TEXT NOT NULL DEFAULT 'event';
     ALTER TABLE cards ADD COLUMN IF NOT EXISTS member_id INTEGER;
     ALTER TABLE cards ADD COLUMN IF NOT EXISTS event_date TEXT;
     ALTER TABLE cards ADD COLUMN IF NOT EXISTS start_time TEXT;
@@ -38,6 +39,7 @@ async function initPgSchema() {
     CREATE INDEX IF NOT EXISTS idx_boards_family ON boards(family_id);
     CREATE INDEX IF NOT EXISTS idx_cards_event_date ON cards(event_date);
     CREATE INDEX IF NOT EXISTS idx_cards_remind_at ON cards(remind_at);
+    CREATE INDEX IF NOT EXISTS idx_cards_type ON cards(card_type);
     CREATE INDEX IF NOT EXISTS idx_card_members_member ON card_members(member_id);
   `);
 }

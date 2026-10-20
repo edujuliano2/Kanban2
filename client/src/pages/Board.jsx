@@ -32,9 +32,10 @@ function sortEvents(a, b) {
   return (a.id || 0) - (b.id || 0);
 }
 
-function emptyNewForm(memberIds, dateKey, category = 'outro') {
+function emptyNewForm(memberIds, dateKey, category = 'outro', type = 'event') {
   return {
     title: '',
+    type,
     event_date: dateKey || todayKey(),
     start_time: '',
     end_time: '',
@@ -42,7 +43,7 @@ function emptyNewForm(memberIds, dateKey, category = 'outro') {
     category,
     location: '',
     description: '',
-    send_invites: true
+    send_invites: type === 'event'
   };
 }
 
@@ -66,6 +67,7 @@ export default function Board() {
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [filterMember, setFilterMember] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [filterType, setFilterType] = useState('all');
 
   const [showNew, setShowNew] = useState(false);
   const [newForm, setNewForm] = useState(() =>
@@ -78,7 +80,12 @@ export default function Board() {
   const [savingBoard, setSavingBoard] = useState(false);
 
   const [addingTo, setAddingTo] = useState(null);
-  const [quickForm, setQuickForm] = useState({ title: '', time: '', member_ids: [] });
+  const [quickForm, setQuickForm] = useState({
+    title: '',
+    time: '',
+    type: 'event',
+    member_ids: []
+  });
 
   const [moveMenu, setMoveMenu] = useState(null);
   const dragActiveRef = useRef(0);
@@ -110,6 +117,7 @@ export default function Board() {
 
   const cards = board?.cards || [];
   const filtered = cards.filter((card) => {
+    if (filterType !== 'all' && (card.card_type || 'event') !== filterType) return false;
     if (filterMember !== 'all' && !cardMemberIds(card).includes(Number(filterMember))) return false;
     if (filterCategory !== 'all' && (card.category || 'outro') !== filterCategory) return false;
     return true;
@@ -130,19 +138,47 @@ export default function Board() {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const defaultDate = today >= weekStart && today <= weekEnd ? todayKey() : toDateKey(weekStart);
-
-    setNewForm(
-      emptyNewForm(
-        filterMember === 'all'
+    const type = filterType === 'task' ? 'task' : 'event';
+    const defaultMembers =
+      type === 'task'
+        ? filterMember !== 'all'
+          ? [Number(filterMember)]
+          : []
+        : filterMember === 'all'
           ? user?.member_id
             ? [user.member_id]
             : []
-          : [Number(filterMember)],
+          : [Number(filterMember)];
+
+    setNewForm(
+      emptyNewForm(
+        defaultMembers,
         defaultDate,
-        filterCategory === 'all' ? 'outro' : filterCategory
+        filterCategory === 'all' ? 'outro' : filterCategory,
+        type
       )
     );
     setShowNew(true);
+  }
+
+  function changeNewType(type) {
+    setNewForm((prev) => ({
+      ...prev,
+      type,
+      start_time: type === 'task' ? '' : prev.start_time,
+      end_time: type === 'task' ? '' : prev.end_time,
+      send_invites: type === 'event',
+      member_ids:
+        type === 'task'
+          ? filterMember !== 'all'
+            ? [Number(filterMember)]
+            : []
+          : prev.member_ids.length
+            ? prev.member_ids
+            : user?.member_id
+              ? [user.member_id]
+              : []
+    }));
   }
 
   function openEditModal() {
@@ -167,16 +203,20 @@ export default function Board() {
     }
   }
 
-  function openQuickAdd(dayKey) {
+  function openQuickAdd(dayKey, type) {
+    const nextType = type === 'task' ? 'task' : 'event';
     setQuickForm({
       title: '',
       time: '',
+      type: nextType,
       member_ids:
         filterMember !== 'all'
           ? [Number(filterMember)]
-          : user?.member_id
-            ? [user.member_id]
-            : []
+          : nextType === 'task'
+            ? []
+            : user?.member_id
+              ? [user.member_id]
+              : []
     });
     setAddingTo(dayKey);
   }
@@ -205,11 +245,12 @@ export default function Board() {
 
     setCreating(true);
     try {
+      const isTask = newForm.type === 'task';
       const created = await api.createCard(board.id, {
         ...newForm,
-        start_time: newForm.start_time || null,
-        end_time: newForm.end_time || null,
-        send_invites: Boolean(newForm.send_invites)
+        start_time: isTask ? null : newForm.start_time || null,
+        end_time: isTask ? null : newForm.end_time || null,
+        send_invites: !isTask && Boolean(newForm.send_invites)
       });
       setBoard((prev) => ({ ...prev, cards: [...prev.cards, created] }));
       if (created.event_date) {
@@ -230,16 +271,18 @@ export default function Board() {
     if (!quickForm.title.trim()) return;
 
     try {
+      const isTask = quickForm.type === 'task';
       const created = await api.createCard(board.id, {
         title: quickForm.title,
+        type: quickForm.type,
         event_date: dayKey === UNDATED ? null : dayKey,
-        start_time: quickForm.time || null,
+        start_time: isTask ? null : quickForm.time || null,
         member_ids: quickForm.member_ids,
         category: filterCategory === 'all' ? 'outro' : filterCategory,
-        send_invites: true
+        send_invites: !isTask
       });
       setBoard((prev) => ({ ...prev, cards: [...prev.cards, created] }));
-      setQuickForm({ title: '', time: '', member_ids: quickForm.member_ids });
+      setQuickForm({ title: '', time: '', type: 'event', member_ids: quickForm.member_ids });
       setAddingTo(null);
       setError('');
       setNotice(inviteMessage(created.invite));
@@ -447,17 +490,27 @@ export default function Board() {
             })}
           </div>
 
-          <label className="category-filter">
-            <span className="sr-only">Filtrar por categoria</span>
-            <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
-              <option value="all">Todas as categorias</option>
-              {CATEGORIES.map((category) => (
-                <option key={category.value} value={category.value}>
-                  {category.icon} {category.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="filter-selects">
+            <label className="category-filter">
+              <span className="sr-only">Filtrar por tipo</span>
+              <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+                <option value="all">Eventos e tarefas</option>
+                <option value="event">Somente eventos</option>
+                <option value="task">Somente tarefas</option>
+              </select>
+            </label>
+            <label className="category-filter">
+              <span className="sr-only">Filtrar por categoria</span>
+              <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
+                <option value="all">Todas as categorias</option>
+                {CATEGORIES.map((category) => (
+                  <option key={category.value} value={category.value}>
+                    {category.icon} {category.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
       </div>
 
@@ -515,21 +568,33 @@ export default function Board() {
 
               {addingTo === column.key ? (
                 <form className="quick-add" onSubmit={(e) => handleQuickAdd(e, column.key)}>
+                  <span className={`quick-add-type ${quickForm.type}`}>
+                    {quickForm.type === 'task' ? 'Nova tarefa' : 'Novo evento'}
+                  </span>
                   <input
                     autoFocus
                     type="text"
                     value={quickForm.title}
                     onChange={(e) => setQuickForm({ ...quickForm, title: e.target.value })}
-                    placeholder="O que vai acontecer?"
+                    placeholder={
+                      quickForm.type === 'task'
+                        ? 'O que precisa ser feito?'
+                        : 'O que vai acontecer?'
+                    }
                   />
-                  <div className="quick-add-row">
-                    <input
-                      type="time"
-                      value={quickForm.time}
-                      onChange={(e) => setQuickForm({ ...quickForm, time: e.target.value })}
-                      aria-label="Horário"
-                    />
-                  </div>
+                  {quickForm.type === 'event' && (
+                    <div className="quick-add-row">
+                      <input
+                        type="time"
+                        value={quickForm.time}
+                        onChange={(e) => setQuickForm({ ...quickForm, time: e.target.value })}
+                        aria-label="Horário"
+                      />
+                    </div>
+                  )}
+                  <span className="quick-add-label">
+                    {quickForm.type === 'task' ? 'Responsáveis' : 'Participantes'}
+                  </span>
                   <MemberPicker
                     members={members}
                     selected={quickForm.member_ids}
@@ -543,13 +608,22 @@ export default function Board() {
                   </div>
                 </form>
               ) : (
-                <button
-                  type="button"
-                  className="btn text add-card-btn"
-                  onClick={() => openQuickAdd(column.key)}
-                >
-                  + Adicionar
-                </button>
+                <div className="quick-add-buttons">
+                  <button
+                    type="button"
+                    className="btn text add-card-btn"
+                    onClick={() => openQuickAdd(column.key, 'event')}
+                  >
+                    + Evento
+                  </button>
+                  <button
+                    type="button"
+                    className="btn text add-card-btn"
+                    onClick={() => openQuickAdd(column.key, 'task')}
+                  >
+                    + Tarefa
+                  </button>
+                </div>
               )}
             </div>
           ))}
@@ -593,20 +667,28 @@ export default function Board() {
 
             {addingTo === UNDATED ? (
               <form className="quick-add" onSubmit={(e) => handleQuickAdd(e, UNDATED)}>
+                <span className={`quick-add-type ${quickForm.type}`}>
+                  {quickForm.type === 'task' ? 'Nova tarefa' : 'Novo evento'}
+                </span>
                 <input
                   autoFocus
                   type="text"
                   value={quickForm.title}
                   onChange={(e) => setQuickForm({ ...quickForm, title: e.target.value })}
-                  placeholder="Ex: comprar material escolar"
+                  placeholder={
+                    quickForm.type === 'task'
+                      ? 'Tarefa para organizar depois'
+                      : 'Evento para organizar depois'
+                  }
                 />
-                <div className="quick-add-row">
-                  <MemberPicker
-                    members={members}
-                    selected={quickForm.member_ids}
-                    onToggle={toggleQuickMember}
-                  />
-                </div>
+                <span className="quick-add-label">
+                  {quickForm.type === 'task' ? 'Responsáveis' : 'Participantes'}
+                </span>
+                <MemberPicker
+                  members={members}
+                  selected={quickForm.member_ids}
+                  onToggle={toggleQuickMember}
+                />
                 <div className="row gap">
                   <button type="submit" className="btn primary small">Salvar</button>
                   <button type="button" className="btn small" onClick={() => setAddingTo(null)}>
@@ -615,13 +697,22 @@ export default function Board() {
                 </div>
               </form>
             ) : (
-              <button
-                type="button"
-                className="btn text add-card-btn"
-                onClick={() => openQuickAdd(UNDATED)}
-              >
-                + Adicionar
-              </button>
+              <div className="quick-add-buttons">
+                <button
+                  type="button"
+                  className="btn text add-card-btn"
+                  onClick={() => openQuickAdd(UNDATED, 'event')}
+                >
+                  + Evento
+                </button>
+                <button
+                  type="button"
+                  className="btn text add-card-btn"
+                  onClick={() => openQuickAdd(UNDATED, 'task')}
+                >
+                  + Tarefa
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -676,7 +767,29 @@ export default function Board() {
             onClick={(e) => e.stopPropagation()}
             onSubmit={handleCreate}
           >
-            <h3>Nova atividade</h3>
+            <h3>{newForm.type === 'task' ? 'Nova tarefa' : 'Novo evento'}</h3>
+
+            <div className="type-toggle" role="group" aria-label="Tipo de card">
+              <button
+                type="button"
+                className={newForm.type === 'event' ? 'active' : ''}
+                onClick={() => changeNewType('event')}
+              >
+                📅 Evento
+              </button>
+              <button
+                type="button"
+                className={newForm.type === 'task' ? 'active' : ''}
+                onClick={() => changeNewType('task')}
+              >
+                ✅ Tarefa
+              </button>
+            </div>
+            <p className="type-hint muted small">
+              {newForm.type === 'task'
+                ? 'Tarefa do dia, sem horário. Pode ser direcionada a outros membros sem incluir você.'
+                : 'Evento com data, horário, participantes e convite de calendário.'}
+            </p>
 
             <label className="field">
               <span>Título</span>
@@ -685,14 +798,18 @@ export default function Board() {
                 type="text"
                 value={newForm.title}
                 onChange={(e) => setNewForm({ ...newForm, title: e.target.value })}
-                placeholder="Ex: Reunião na escola, natação, consulta"
+                placeholder={
+                  newForm.type === 'task'
+                    ? 'Ex: comprar material escolar, levar uniforme'
+                    : 'Ex: Reunião na escola, natação, consulta'
+                }
                 required
               />
             </label>
 
             <div className="form-grid">
               <label className="field">
-                <span>Data</span>
+                <span>{newForm.type === 'task' ? 'Dia da tarefa' : 'Data'}</span>
                 <input
                   type="date"
                   value={newForm.event_date}
@@ -700,23 +817,27 @@ export default function Board() {
                 />
               </label>
 
-              <label className="field">
-                <span>Início</span>
-                <input
-                  type="time"
-                  value={newForm.start_time}
-                  onChange={(e) => setNewForm({ ...newForm, start_time: e.target.value })}
-                />
-              </label>
+              {newForm.type === 'event' && (
+                <>
+                  <label className="field">
+                    <span>Início</span>
+                    <input
+                      type="time"
+                      value={newForm.start_time}
+                      onChange={(e) => setNewForm({ ...newForm, start_time: e.target.value })}
+                    />
+                  </label>
 
-              <label className="field">
-                <span>Fim</span>
-                <input
-                  type="time"
-                  value={newForm.end_time}
-                  onChange={(e) => setNewForm({ ...newForm, end_time: e.target.value })}
-                />
-              </label>
+                  <label className="field">
+                    <span>Fim</span>
+                    <input
+                      type="time"
+                      value={newForm.end_time}
+                      onChange={(e) => setNewForm({ ...newForm, end_time: e.target.value })}
+                    />
+                  </label>
+                </>
+              )}
 
               <label className="field">
                 <span>Categoria</span>
@@ -744,25 +865,31 @@ export default function Board() {
             </div>
 
             <div className="field">
-              <span>Quem participa</span>
+              <span>
+                {newForm.type === 'task' ? 'Responsáveis pela tarefa' : 'Quem participa'}
+              </span>
               <MemberPicker
                 members={members}
                 selected={newForm.member_ids}
                 onToggle={toggleNewMember}
               />
               <small className="field-hint">
-                O convite de calendário será enviado para o e-mail cadastrado de cada pessoa.
+                {newForm.type === 'task'
+                  ? 'Você pode direcionar a tarefa para outra pessoa sem se incluir.'
+                  : 'O convite de calendário será enviado para o e-mail cadastrado de cada pessoa.'}
               </small>
             </div>
 
-            <label className="check-line">
-              <input
-                type="checkbox"
-                checked={newForm.send_invites}
-                onChange={(e) => setNewForm({ ...newForm, send_invites: e.target.checked })}
-              />
-              <span>Enviar convite para a agenda de e-mail das pessoas</span>
-            </label>
+            {newForm.type === 'event' && (
+              <label className="check-line">
+                <input
+                  type="checkbox"
+                  checked={newForm.send_invites}
+                  onChange={(e) => setNewForm({ ...newForm, send_invites: e.target.checked })}
+                />
+                <span>Enviar convite para a agenda de e-mail das pessoas</span>
+              </label>
+            )}
 
             <label className="field">
               <span>Observações</span>
@@ -778,7 +905,11 @@ export default function Board() {
 
             <div className="row gap modal-actions">
               <button type="submit" className="btn primary" disabled={creating}>
-                {creating ? 'Salvando...' : 'Adicionar à agenda'}
+                {creating
+                  ? 'Salvando...'
+                  : newForm.type === 'task'
+                    ? 'Criar tarefa'
+                    : 'Adicionar à agenda'}
               </button>
               <button type="button" className="btn" onClick={() => setShowNew(false)}>
                 Cancelar
@@ -842,6 +973,7 @@ function EventMini({
 }) {
   const category = categoryOf(card.category);
   const color = memberColor(members[0]?.color);
+  const isTask = (card.card_type || 'event') === 'task';
 
   return (
     <Draggable draggableId={String(card.id)} index={index}>
@@ -850,9 +982,9 @@ function EventMini({
           ref={dragProvided.innerRef}
           {...dragProvided.draggableProps}
           {...dragProvided.dragHandleProps}
-          className={`card-mini event-mini${dragSnapshot.isDragging ? ' dragging' : ''}${
-            card.done ? ' done' : ''
-          }`}
+          className={`card-mini event-mini${isTask ? ' is-task' : ''}${
+            dragSnapshot.isDragging ? ' dragging' : ''
+          }${card.done ? ' done' : ''}`}
           style={{
             ...dragProvided.draggableProps.style,
             borderLeftColor: color
@@ -875,13 +1007,19 @@ function EventMini({
               ✓
             </button>
 
-            <span className={`event-time${card.start_time ? '' : ' all-day'}`}>
-              {card.start_time
-                ? `${formatClock(card.start_time)}${card.end_time ? `–${formatClock(card.end_time)}` : ''}`
-                : card.event_date
-                  ? 'Dia todo'
-                  : 'Sem data'}
-            </span>
+            {isTask ? (
+              <span className="event-time task">Tarefa</span>
+            ) : (
+              <span className={`event-time${card.start_time ? '' : ' all-day'}`}>
+                {card.start_time
+                  ? `${formatClock(card.start_time)}${
+                      card.end_time ? `–${formatClock(card.end_time)}` : ''
+                    }`
+                  : card.event_date
+                    ? 'Dia todo'
+                    : 'Sem data'}
+              </span>
+            )}
 
             <span className="event-category" title={category.label}>
               {category.icon}
