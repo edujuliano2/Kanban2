@@ -29,8 +29,9 @@ export default function Login() {
   return (
     <div className="page center">
       <form className="card auth-card" onSubmit={handleSubmit}>
-        <h1 className="auth-title">Kanban Pessoal</h1>
-        <p className="auth-subtitle">Entre para organizar suas tarefas</p>
+        <div className="auth-brand" aria-hidden="true">📅</div>
+        <h1 className="auth-title">Agenda da Família</h1>
+        <p className="auth-subtitle">Organize a rotina de quem você ama</p>
 
         <label className="field">
           <span>Email</span>

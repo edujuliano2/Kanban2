@@ -3,15 +3,13 @@ const bcrypt = require('bcryptjs');
 const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const { asyncHandler } = require('../helpers');
+const { getUserWithFamily, normalizeEmail } = require('../family-helpers');
 
 const router = express.Router();
 router.use(requireAuth);
 
 router.get('/me', asyncHandler(async (req, res) => {
-  const user = await db.get(
-    'SELECT id, name, email FROM users WHERE id = ?',
-    [req.user.id]
-  );
+  const user = await getUserWithFamily(db, req.user.id);
   if (!user) {
     return res.status(404).json({ error: 'Usuário não encontrado' });
   }
@@ -30,7 +28,11 @@ router.put('/profile', asyncHandler(async (req, res) => {
   }
 
   const newName = (name && name.trim()) || user.name;
-  const newEmail = (email && email.trim()) || user.email;
+  const newEmail = email ? normalizeEmail(email) : user.email;
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+    return res.status(400).json({ error: 'Informe um e-mail válido' });
+  }
 
   if (newEmail !== user.email) {
     const existing = await db.get(
@@ -48,12 +50,18 @@ router.put('/profile', asyncHandler(async (req, res) => {
     user.id
   ]);
 
+  await db.run('UPDATE members SET name = ?, email = ? WHERE linked_user_id = ?', [
+    newName,
+    newEmail,
+    user.id
+  ]);
+
   if (newPassword) {
     const hash = bcrypt.hashSync(newPassword, 10);
     await db.run('UPDATE users SET password_hash = ? WHERE id = ?', [hash, user.id]);
   }
 
-  res.json({ id: user.id, name: newName, email: newEmail });
+  res.json(await getUserWithFamily(db, user.id));
 }));
 
 module.exports = router;

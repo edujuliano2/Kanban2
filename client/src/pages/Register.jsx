@@ -6,6 +6,7 @@ import { useAuth } from '../auth';
 export default function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
@@ -24,7 +25,7 @@ export default function Register() {
 
     setBusy(true);
     try {
-      const data = await api.register(name, email, password);
+      const data = await api.register(name, email, password, inviteCode);
       setSession(data.token, data.user);
       navigate('/boards');
     } catch (err) {
@@ -37,8 +38,9 @@ export default function Register() {
   return (
     <div className="page center">
       <form className="card auth-card" onSubmit={handleSubmit}>
-        <h1 className="auth-title">Criar Conta</h1>
-        <p className="auth-subtitle">Comece a organizar suas tarefas</p>
+        <div className="auth-brand" aria-hidden="true">👨‍👩‍👧‍👦</div>
+        <h1 className="auth-title">Criar conta da família</h1>
+        <p className="auth-subtitle">Um só lugar para a agenda de todos</p>
 
         <label className="field">
           <span>Nome</span>
@@ -60,6 +62,19 @@ export default function Register() {
             placeholder="voce@exemplo.com"
             required
           />
+        </label>
+
+        <label className="field">
+          <span>Código de convite da família (opcional)</span>
+          <input
+            type="text"
+            value={inviteCode}
+            onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+            placeholder="Ex: ABC12345"
+          />
+          <small className="field-hint">
+            Se alguém da sua família já usa a agenda, informe o código para entrar na mesma família.
+          </small>
         </label>
 
         <label className="field">

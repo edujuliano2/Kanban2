@@ -6,17 +6,14 @@ const { asyncHandler } = require('../helpers');
 const router = express.Router();
 router.use(requireAuth);
 
-async function getOwnedBoard(boardId, userId) {
-  return db.get(
-    'SELECT id FROM boards WHERE id = ? AND user_id = ?',
-    [boardId, userId]
-  );
+async function getFamilyBoard(boardId, familyId) {
+  return db.get('SELECT id FROM boards WHERE id = ? AND family_id = ?', [boardId, familyId]);
 }
 
 router.post('/boards/:boardId/lists', asyncHandler(async (req, res) => {
-  const board = await getOwnedBoard(req.params.boardId, req.user.id);
+  const board = await getFamilyBoard(req.params.boardId, req.user.family_id);
   if (!board) {
-    return res.status(404).json({ error: 'Quadro não encontrado' });
+    return res.status(404).json({ error: 'Agenda não encontrada' });
   }
 
   const { title, color } = req.body || {};
@@ -35,10 +32,7 @@ router.post('/boards/:boardId/lists', asyncHandler(async (req, res) => {
     [board.id, title.trim(), nextPosition, color || null]
   );
 
-  const list = await db.get(
-    'SELECT * FROM lists WHERE id = ?',
-    [result.lastInsertRowid]
-  );
+  const list = await db.get('SELECT * FROM lists WHERE id = ?', [result.lastInsertRowid]);
   res.status(201).json({ ...list, cards: [] });
 }));
 
@@ -46,8 +40,8 @@ router.put('/lists/:id', asyncHandler(async (req, res) => {
   const list = await db.get(
     `SELECT lists.* FROM lists
      JOIN boards ON boards.id = lists.board_id
-     WHERE lists.id = ? AND boards.user_id = ?`,
-    [req.params.id, req.user.id]
+     WHERE lists.id = ? AND boards.family_id = ?`,
+    [req.params.id, req.user.family_id]
   );
   if (!list) {
     return res.status(404).json({ error: 'Lista não encontrada' });
@@ -73,8 +67,8 @@ router.delete('/lists/:id', asyncHandler(async (req, res) => {
   const list = await db.get(
     `SELECT lists.* FROM lists
      JOIN boards ON boards.id = lists.board_id
-     WHERE lists.id = ? AND boards.user_id = ?`,
-    [req.params.id, req.user.id]
+     WHERE lists.id = ? AND boards.family_id = ?`,
+    [req.params.id, req.user.family_id]
   );
   if (!list) {
     return res.status(404).json({ error: 'Lista não encontrada' });
@@ -90,9 +84,9 @@ router.post('/lists/:listId/cards', asyncHandler(async (req, res) => {
     return res.status(404).json({ error: 'Lista não encontrada' });
   }
 
-  const board = await getOwnedBoard(list.board_id, req.user.id);
+  const board = await getFamilyBoard(list.board_id, req.user.family_id);
   if (!board) {
-    return res.status(404).json({ error: 'Quadro não encontrado' });
+    return res.status(404).json({ error: 'Agenda não encontrada' });
   }
 
   const { title, color } = req.body || {};

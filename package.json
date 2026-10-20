@@ -2,7 +2,7 @@
   "name": "kanban",
   "version": "1.0.0",
   "private": true,
-  "description": "Sistema Kanban pessoal - monorepo (API + frontend)",
+  "description": "Agenda familiar em formato Kanban - monorepo (API + frontend)",
   "scripts": {
     "build": "cd client && npm ci && npm run build",
     "dev": "concurrently -n api,web -c blue,green \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
@@ -14,6 +14,7 @@
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.10.1",
     "pg": "^8.13.0"
   },
   "devDependencies": {

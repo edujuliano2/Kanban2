@@ -1,11 +1,13 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth';
+import AppNav from './components/AppNav';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Boards from './pages/Boards';
 import CreateBoard from './pages/CreateBoard';
 import Board from './pages/Board';
 import CardDetail from './pages/CardDetail';
+import Family from './pages/Family';
 import Settings from './pages/Settings';
 
 function RequireAuth({ children }) {
@@ -18,7 +20,12 @@ function RequireAuth({ children }) {
   if (!user) {
     return <Navigate to="/" state={{ from: location }} replace />;
   }
-  return children;
+  return (
+    <>
+      <AppNav />
+      {children}
+    </>
+  );
 }
 
 function RedirectIfAuthed({ children }) {
@@ -78,6 +85,14 @@ export default function App() {
             element={
               <RequireAuth>
                 <CardDetail />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/family"
+            element={
+              <RequireAuth>
+                <Family />
               </RequireAuth>
             }
           />

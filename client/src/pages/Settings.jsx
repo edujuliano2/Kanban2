@@ -48,11 +48,23 @@ export default function Settings() {
   return (
     <div className="page">
       <header className="topbar">
-        <h1>Configurações</h1>
-        <Link to="/boards" className="btn">Voltar</Link>
+        <h1>Ajustes da conta</h1>
+        <Link to="/boards" className="btn">Voltar às agendas</Link>
       </header>
 
       <form className="card max-w" onSubmit={handleSubmit}>
+        <h2>Seus dados</h2>
+        <p className="muted">
+          Estes dados identificam a sua conta na família. As pessoas da rotina são cadastradas na
+          aba Família.
+        </p>
+        {user?.family_name && (
+          <p className="family-account-line">
+            Família: <strong>{user.family_name}</strong> ·{' '}
+            <Link to="/family">gerenciar família e convites</Link>
+          </p>
+        )}
+
         <label className="field">
           <span>Nome</span>
           <input type="text" value={name} onChange={(e) => setName(e.target.value)} required />

@@ -1,5 +1,6 @@
 const { Pool } = require('pg');
 const SCHEMA = require('./schema');
+const { runFamilyMigration } = require('./family-migration');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -18,16 +19,28 @@ function toPg(sql) {
 async function initPgSchema() {
   await pool.query(SCHEMA);
   await pool.query(`
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS family_id INTEGER;
+    ALTER TABLE members ADD COLUMN IF NOT EXISTS family_id INTEGER;
+    ALTER TABLE members ADD COLUMN IF NOT EXISTS email TEXT;
+    ALTER TABLE members ADD COLUMN IF NOT EXISTS linked_user_id INTEGER;
+    ALTER TABLE boards ADD COLUMN IF NOT EXISTS family_id INTEGER;
     ALTER TABLE lists ADD COLUMN IF NOT EXISTS color TEXT;
     ALTER TABLE cards ADD COLUMN IF NOT EXISTS color TEXT;
+    ALTER TABLE cards ADD COLUMN IF NOT EXISTS member_id INTEGER;
+    ALTER TABLE cards ADD COLUMN IF NOT EXISTS event_date TEXT;
+    ALTER TABLE cards ADD COLUMN IF NOT EXISTS start_time TEXT;
+    ALTER TABLE cards ADD COLUMN IF NOT EXISTS end_time TEXT;
+    ALTER TABLE cards ADD COLUMN IF NOT EXISTS location TEXT DEFAULT '';
+    ALTER TABLE cards ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'outro';
+    ALTER TABLE cards ADD COLUMN IF NOT EXISTS done INTEGER NOT NULL DEFAULT 0;
+    CREATE INDEX IF NOT EXISTS idx_members_family ON members(family_id);
+    CREATE INDEX IF NOT EXISTS idx_boards_family ON boards(family_id);
+    CREATE INDEX IF NOT EXISTS idx_cards_event_date ON cards(event_date);
+    CREATE INDEX IF NOT EXISTS idx_card_members_member ON card_members(member_id);
   `);
 }
 
-initPgSchema().catch((err) => {
-  console.error('Erro ao criar schema no Postgres:', err.message);
-});
-
-module.exports = {
+const raw = {
   async get(sql, params = []) {
     const { rows } = await pool.query(toPg(sql), params);
     return rows[0] ?? null;
@@ -45,9 +58,44 @@ module.exports = {
   },
   async exec(sql, params = []) {
     await pool.query(sql, params);
+  }
+};
+
+let schemaPromise = null;
+
+function ensureSchema() {
+  if (!schemaPromise) {
+    schemaPromise = (async () => {
+      await initPgSchema();
+      await runFamilyMigration(raw);
+    })().catch((err) => {
+      console.error('Erro ao criar schema/migrar famílias no Postgres:', err.message);
+    });
+  }
+  return schemaPromise;
+}
+
+const ready = ensureSchema();
+
+module.exports = {
+  async get(sql, params = []) {
+    await ready;
+    return raw.get(sql, params);
+  },
+  async all(sql, params = []) {
+    await ready;
+    return raw.all(sql, params);
+  },
+  async run(sql, params = []) {
+    await ready;
+    return raw.run(sql, params);
+  },
+  async exec(sql, params = []) {
+    await ready;
+    return raw.exec(sql, params);
   },
   async initSchema() {
-    await initPgSchema();
+    await ensureSchema();
   },
   pool
 };

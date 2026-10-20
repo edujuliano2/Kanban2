@@ -14,8 +14,8 @@ export default function CreateBoard() {
     setError('');
     setBusy(true);
     try {
-      await api.createBoard(name, description);
-      navigate('/boards');
+      const board = await api.createBoard(name, description);
+      navigate(`/board/${board.id}`);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -25,16 +25,20 @@ export default function CreateBoard() {
 
   return (
     <div className="page center">
-      <form className="card" onSubmit={handleSubmit}>
-        <h1>Criar Quadro</h1>
+      <form className="card max-w" onSubmit={handleSubmit}>
+        <h1>Nova agenda</h1>
+        <p className="muted">
+          Use uma agenda para a rotina da família e outras para projetos ou compromissos específicos.
+        </p>
 
         <label className="field">
-          <span>Nome do Quadro</span>
+          <span>Nome da agenda</span>
           <input
+            autoFocus
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Ex: Trabalho, Compras, Projetos"
+            placeholder="Ex: Rotina da família, Escola das meninas, Trabalho"
             required
           />
         </label>
@@ -44,7 +48,7 @@ export default function CreateBoard() {
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Descreva o objetivo deste quadro (opcional)"
+            placeholder="Para que serve esta agenda? (opcional)"
             rows={3}
           />
         </label>
@@ -53,7 +57,7 @@ export default function CreateBoard() {
 
         <div className="row gap">
           <button type="submit" className="btn primary" disabled={busy}>
-            {busy ? 'Salvando...' : 'Salvar'}
+            {busy ? 'Criando...' : 'Criar agenda'}
           </button>
           <button type="button" className="btn" onClick={() => navigate('/boards')}>
             Cancelar

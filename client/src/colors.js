@@ -13,6 +13,21 @@ export const PALETTE = [
   { value: '#607d8b', label: 'Azul-cinza', swatch: '#607d8b' }
 ];
 
+export const MEMBER_COLORS = [
+  '#3b6cf6',
+  '#e91e63',
+  '#009688',
+  '#f59e0b',
+  '#8b5cf6',
+  '#ef4444',
+  '#10b981',
+  '#0ea5e9',
+  '#ec4899',
+  '#64748b'
+];
+
+export const MEMBER_EMOJIS = ['🧑', '👩', '👨', '👧', '👦', '👶', '👵', '👴', '🐶', '🌟'];
+
 export function contrastColor(hex) {
   if (!hex) return null;
   const h = hex.replace('#', '');
@@ -22,4 +37,8 @@ export function contrastColor(hex) {
   const b = parseInt(h.slice(4, 6), 16);
   const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
   return lum > 0.6 ? '#172b4d' : '#ffffff';
+}
+
+export function memberColor(color) {
+  return color || '#8a94a6';
 }
