@@ -103,10 +103,25 @@ function normalizeEmail(value) {
   return value.trim().toLowerCase();
 }
 
+function normalizePhone(value) {
+  let digits = String(value || '').replace(/\D/g, '');
+  digits = digits.replace(/^0+/, '');
+  if (digits.length === 10 || digits.length === 11) {
+    digits = `55${digits}`;
+  }
+  return digits;
+}
+
+function validPhone(value) {
+  return !value || (value.length >= 12 && value.length <= 15);
+}
+
 module.exports = {
   generateInviteCode,
   getFamily,
   getUserWithFamily,
   ensureUserMember,
-  normalizeEmail
+  normalizeEmail,
+  normalizePhone,
+  validPhone
 };

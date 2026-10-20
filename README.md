@@ -5,7 +5,7 @@ Aplicação de agenda familiar que mantém a essência visual de um Kanban: cada
 ## O que dá para fazer
 
 - **Uma família, vários logins**: cada pessoa pode criar a própria conta e entrar na mesma família usando um código de convite.
-- **Cadastrar a família** em `Família`, com nome, papel (mãe, pai, filha...), cor, emoji e e-mail para convites.
+- **Cadastrar a família** em `Família`, com nome, papel (mãe, pai, filha...), cor, emoji, e-mail para convites e telefone WhatsApp.
 - **Filtrar a agenda por pessoa** ou por categoria (escola, saúde, esporte, trabalho, lazer etc.).
 - **Visualizar a semana em colunas** de segunda a domingo, com navegação entre semanas.
 - **Visão Calendário** com todos os eventos e tarefas do mês agrupados por dia, mostrando somente os dias que têm atividades.
@@ -74,6 +74,53 @@ Também é recomendado definir:
 APP_URL=https://sua-agenda.vercel.app
 MAIL_REPLY_TO=seu-email@seudominio.com
 ```
+
+## Avisos por WhatsApp (n8n)
+
+O fluxo do n8n usa os telefones cadastrados em `Família` para enviar:
+
+- **Domingo às 22:00** — agenda dos próximos 7 dias de cada pessoa.
+- **Todos os dias às 07:00** — eventos e tarefas do dia. Se não houver nada, envia uma mensagem avisando que o dia está livre.
+- **A cada 10 minutos** — lembrete para eventos que começam em aproximadamente 1 hora.
+
+### Cadastro do telefone
+
+Em `Família`, edite cada pessoa e preencha o campo **WhatsApp**. Pode informar com máscara; o sistema normaliza os dígitos e adiciona o código do Brasil (55) quando o número tem DDD + número.
+
+### API usada pelo n8n
+
+Os endpoints ficam protegidos pela chave `NOTIFICATIONS_API_KEY`, enviada no header `x-api-key`:
+
+```text
+GET /api/notifications/daily
+GET /api/notifications/weekly
+GET /api/notifications/reminders
+```
+
+Exemplo de resposta:
+
+```json
+{
+  "messages": [
+    {
+      "name": "Ana",
+      "phone": "5511999999999",
+      "message": "🌞 Bom dia, Ana! ..."
+    }
+  ]
+}
+```
+
+O fluxo do n8n envia cada item para a API do WhatsApp com `phone` e `message`.
+
+### Variáveis necessárias
+
+- `NOTIFICATIONS_API_KEY` — mesma chave usada no n8n.
+- `NOTIFICATIONS_FAMILY_ID` — ID da família que receberá os avisos (opcional; recomendado para não incluir contas de teste).
+- `APP_TIMEZONE` — fuso usado nos cálculos (padrão: `America/Sao_Paulo`).
+- `APP_URL` — URL pública da aplicação.
+
+Na Vercel, cadastre também `NOTIFICATIONS_API_KEY` e `APP_TIMEZONE` em **Settings → Environment Variables**.
 
 ## Estrutura do projeto
 

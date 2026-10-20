@@ -3,7 +3,7 @@ const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const { asyncHandler } = require('../helpers');
 const { hasOwn, cleanText } = require('../event-fields');
-const { normalizeEmail } = require('../family-helpers');
+const { normalizeEmail, normalizePhone, validPhone } = require('../family-helpers');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -43,6 +43,13 @@ router.post('/', asyncHandler(async (req, res) => {
     return res.status(400).json({ error: 'E-mail inválido' });
   }
 
+  const phone = normalizePhone(body.phone);
+  if (!validPhone(phone)) {
+    return res.status(400).json({
+      error: 'Telefone inválido. Use DDD + número ou o código do país.'
+    });
+  }
+
   const countRow = await db.get(
     'SELECT COUNT(*) AS count FROM members WHERE family_id = ?',
     [req.user.family_id]
@@ -51,14 +58,15 @@ router.post('/', asyncHandler(async (req, res) => {
 
   const result = await db.run(
     `INSERT INTO members
-      (user_id, family_id, name, relationship, email, color, emoji, position)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
+      (user_id, family_id, name, relationship, email, phone, color, emoji, position)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
     [
       req.user.id,
       req.user.family_id,
       name,
       cleanText(body.relationship, 40) || '',
       email || null,
+      phone || null,
       cleanText(body.color, 20) || MEMBER_COLORS[position % MEMBER_COLORS.length],
       cleanText(body.emoji, 8) || '🙂',
       position
@@ -114,6 +122,16 @@ router.put('/:id', asyncHandler(async (req, res) => {
     }
     fields.push('email = ?');
     params.push(email || null);
+  }
+  if (hasOwn(body, 'phone')) {
+    const phone = normalizePhone(body.phone);
+    if (!validPhone(phone)) {
+      return res.status(400).json({
+        error: 'Telefone inválido. Use DDD + número ou o código do país.'
+      });
+    }
+    fields.push('phone = ?');
+    params.push(phone || null);
   }
 
   if (fields.length) {

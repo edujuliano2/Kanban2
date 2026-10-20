@@ -8,6 +8,7 @@ const memberRoutes = require('./routes/members');
 const agendaRoutes = require('./routes/agenda');
 const familyRoutes = require('./routes/family');
 const settingsRoutes = require('./routes/settings');
+const notificationRoutes = require('./routes/notifications');
 const { asyncHandler } = require('./helpers');
 const db = require('./db');
 
@@ -25,6 +26,7 @@ app.get('/api/health', asyncHandler(async (req, res) => {
 }));
 
 app.use('/api/auth', authRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/boards', boardRoutes);
 app.use('/api', listRoutes);
 app.use('/api/cards', cardRoutes);

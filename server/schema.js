@@ -24,6 +24,7 @@ const SCHEMA = `
     name TEXT NOT NULL,
     relationship TEXT DEFAULT '',
     email TEXT,
+    phone TEXT,
     color TEXT,
     emoji TEXT DEFAULT '🙂',
     position INTEGER NOT NULL DEFAULT 0,

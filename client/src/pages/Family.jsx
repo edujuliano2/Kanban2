@@ -8,6 +8,7 @@ const EMPTY_FORM = {
   name: '',
   relationship: '',
   email: '',
+  phone: '',
   color: MEMBER_COLORS[0],
   emoji: '🙂'
 };
@@ -82,6 +83,7 @@ export default function Family() {
       name: member.name,
       relationship: member.relationship || '',
       email: member.email || '',
+      phone: member.phone || '',
       color: memberColor(member.color),
       emoji: member.emoji || '🙂'
     });
@@ -345,6 +347,19 @@ export default function Family() {
                     placeholder="pessoa@exemplo.com (opcional)"
                   />
                 </label>
+
+                <label className="field">
+                  <span>WhatsApp</span>
+                  <input
+                    type="tel"
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    placeholder="+55 11 99999-9999"
+                  />
+                  <small className="field-hint">
+                    Usado para os avisos no WhatsApp. Inclua DDD ou código do país.
+                  </small>
+                </label>
               </div>
 
               <div className="field">
@@ -423,6 +438,9 @@ export default function Family() {
                   <span className={member.email ? '' : 'muted'}>
                     {member.email || 'Sem e-mail para convites'}
                   </span>
+                  <span className={member.phone ? '' : 'muted'}>
+                    {member.phone ? `📱 ${member.phone}` : 'Sem telefone para WhatsApp'}
+                  </span>
                   {member.linked_user_id ? (
                     <span className="access-badge">Login próprio</span>
                   ) : (
@@ -484,6 +502,19 @@ export default function Family() {
                       Este é o e-mail da conta de login. Para alterar, use Ajustes da conta.
                     </small>
                   )}
+                </label>
+
+                <label className="field">
+                  <span>WhatsApp</span>
+                  <input
+                    type="tel"
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    placeholder="+55 11 99999-9999"
+                  />
+                  <small className="field-hint">
+                    Usado para os avisos no WhatsApp. Inclua DDD ou código do país.
+                  </small>
                 </label>
               </div>
               <div className="field">
@@ -564,7 +595,7 @@ export default function Family() {
 
           <p className="muted small family-id-note">
             {members.length} {members.length === 1 ? 'pessoa' : 'pessoas'} na família · Todas
-            compartilham as mesmas agendas.
+            compartilham as mesmas agendas · ID da família: {family.id}
           </p>
         </>
       )}
