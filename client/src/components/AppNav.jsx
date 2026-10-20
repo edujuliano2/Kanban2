@@ -18,6 +18,9 @@ export default function AppNav() {
         <NavLink to="/boards" className={({ isActive }) => (isActive ? 'active' : '')}>
           Agendas
         </NavLink>
+        <NavLink to="/calendar" className={({ isActive }) => (isActive ? 'active' : '')}>
+          Calendário
+        </NavLink>
         <NavLink to="/family" className={({ isActive }) => (isActive ? 'active' : '')}>
           Família
         </NavLink>

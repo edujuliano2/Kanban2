@@ -54,6 +54,7 @@ export default function Boards() {
           <p className="muted">A rotina de cada um, em um só lugar.</p>
         </div>
         <nav className="topbar-actions">
+          <Link to="/calendar" className="btn">Calendário</Link>
           <Link to="/family" className="btn">Família</Link>
           <Link to="/create-board" className="btn primary">+ Nova agenda</Link>
         </nav>

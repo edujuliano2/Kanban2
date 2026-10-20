@@ -7,6 +7,7 @@ import Boards from './pages/Boards';
 import CreateBoard from './pages/CreateBoard';
 import Board from './pages/Board';
 import CardDetail from './pages/CardDetail';
+import Calendar from './pages/Calendar';
 import Family from './pages/Family';
 import Settings from './pages/Settings';
 import ReminderNotifier from './components/ReminderNotifier';
@@ -94,6 +95,14 @@ export default function App() {
             element={
               <RequireAuth>
                 <Family />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/calendar"
+            element={
+              <RequireAuth>
+                <Calendar />
               </RequireAuth>
             }
           />

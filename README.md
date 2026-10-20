@@ -8,6 +8,7 @@ Aplicação de agenda familiar que mantém a essência visual de um Kanban: cada
 - **Cadastrar a família** em `Família`, com nome, papel (mãe, pai, filha...), cor, emoji e e-mail para convites.
 - **Filtrar a agenda por pessoa** ou por categoria (escola, saúde, esporte, trabalho, lazer etc.).
 - **Visualizar a semana em colunas** de segunda a domingo, com navegação entre semanas.
+- **Visão Calendário** com todos os eventos do mês agrupados por dia, mostrando somente os dias que têm compromissos.
 - **Arrastar compromissos entre os dias** para mudar a data. A coluna **Sem data** funciona como caixa de entrada para organizar depois.
 - **Eventos com vários participantes**: uma consulta, viagem ou programa pode envolver mais de uma pessoa da família.
 - **Convites de calendário por e-mail**: ao criar a atividade, o sistema envia um arquivo `.ics` para o e-mail de cada participante, permitindo adicionar o compromisso à agenda do Gmail, Outlook etc.
