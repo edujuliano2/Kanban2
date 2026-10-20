@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import MemberStack from '../components/MemberStack';
+import TrashIcon from '../components/TrashIcon';
 import { contrastColor, memberColor } from '../colors';
 import { CATEGORIES, categoryOf } from '../categories';
 import {
@@ -40,6 +41,8 @@ export default function Calendar() {
   const [filterCategory, setFilterCategory] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [deletingId, setDeletingId] = useState(null);
 
   const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0);
   const from = toDateKey(monthStart);
@@ -106,6 +109,41 @@ export default function Calendar() {
     setMonthStart((prev) => new Date(prev.getFullYear(), prev.getMonth() + amount, 1));
   }
 
+  async function handleDeleteEvent(event) {
+    if (
+      !window.confirm(
+        `Excluir o evento “${event.title}”? Os participantes com e-mail receberão um cancelamento.`
+      )
+    ) {
+      return;
+    }
+
+    setDeletingId(event.id);
+    setError('');
+    setNotice('');
+    try {
+      const result = await api.deleteCard(event.id);
+      setEvents((prev) => prev.filter((item) => item.id !== event.id));
+
+      const sent = result?.invite?.sent || [];
+      if (sent.length) {
+        setNotice(
+          `Evento excluído. Cancelamento enviado para ${sent
+            .map((item) => item.name)
+            .join(', ')}.`
+        );
+      } else if (result?.invite?.errors?.length) {
+        setNotice('Evento excluído, mas não foi possível avisar os participantes por e-mail.');
+      } else {
+        setNotice('Evento excluído.');
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return (
     <div className="page calendar-page">
       <header className="topbar">
@@ -127,6 +165,7 @@ export default function Calendar() {
       </header>
 
       {error && <p className="error">{error}</p>}
+      {notice && <p className="notice">{notice}</p>}
 
       <div className="calendar-toolbar">
         <div className="calendar-month-nav">
@@ -305,6 +344,24 @@ export default function Calendar() {
                             {category.icon} {category.label}
                           </span>
                           <span className="calendar-event-board">{event.board_name}</span>
+                          <button
+                            type="button"
+                            className="calendar-event-delete"
+                            title={
+                              deletingId === event.id ? 'Excluindo...' : 'Excluir evento'
+                            }
+                            aria-label="Excluir evento"
+                            disabled={deletingId === event.id}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onTouchStart={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteEvent(event);
+                            }}
+                          >
+                            <TrashIcon size={13} />
+                          </button>
                         </div>
 
                         <strong className="calendar-event-title">{event.title}</strong>

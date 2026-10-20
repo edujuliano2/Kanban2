@@ -8,6 +8,7 @@ import { CATEGORIES, categoryOf } from '../categories';
 import { formatDateTime, isOverdue } from '../datetime';
 import MemberStack from '../components/MemberStack';
 import MemberPicker from '../components/MemberPicker';
+import TrashIcon from '../components/TrashIcon';
 import { inviteMessage } from '../invites';
 import {
   WEEKDAYS,
@@ -59,6 +60,7 @@ export default function Board() {
   const [members, setMembers] = useState([]);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [deletingId, setDeletingId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
@@ -291,6 +293,43 @@ export default function Board() {
     api.updateCard(card.id, { done }).catch(() => loadBoard());
   }
 
+  async function handleDeleteCard(card) {
+    if (
+      !window.confirm(
+        `Excluir a atividade “${card.title}”? Os participantes com e-mail receberão um cancelamento.`
+      )
+    ) {
+      return;
+    }
+
+    setDeletingId(card.id);
+    setError('');
+    try {
+      const result = await api.deleteCard(card.id);
+      setBoard((prev) => ({
+        ...prev,
+        cards: prev.cards.filter((item) => item.id !== card.id)
+      }));
+
+      const sent = result?.invite?.sent || [];
+      if (sent.length) {
+        setNotice(
+          `Atividade excluída. Cancelamento enviado para ${sent
+            .map((item) => item.name)
+            .join(', ')}.`
+        );
+      } else if (result?.invite?.errors?.length) {
+        setNotice('Atividade excluída, mas não foi possível avisar os participantes por e-mail.');
+      } else {
+        setNotice('Atividade excluída.');
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   function scrollToUndated() {
     const element = boardBodyRef.current;
     if (!element) return;
@@ -465,6 +504,8 @@ export default function Board() {
                         onOpen={() => navigate(`/board/card/${card.id}`)}
                         onToggleDone={(e) => toggleDone(card, e)}
                         onMove={() => setMoveMenu({ card })}
+                        onDelete={() => handleDeleteCard(card)}
+                        deleting={deletingId === card.id}
                       />
                     ))}
                     {provided.placeholder}
@@ -541,6 +582,8 @@ export default function Board() {
                       onOpen={() => navigate(`/board/card/${card.id}`)}
                       onToggleDone={(e) => toggleDone(card, e)}
                       onMove={() => setMoveMenu({ card })}
+                      onDelete={() => handleDeleteCard(card)}
+                      deleting={deletingId === card.id}
                     />
                   ))}
                   {provided.placeholder}
@@ -786,7 +829,17 @@ export default function Board() {
   );
 }
 
-function EventMini({ card, index, members = [], dragActiveRef, onOpen, onToggleDone, onMove }) {
+function EventMini({
+  card,
+  index,
+  members = [],
+  dragActiveRef,
+  onOpen,
+  onToggleDone,
+  onMove,
+  onDelete,
+  deleting = false
+}) {
   const category = categoryOf(card.category);
   const color = memberColor(members[0]?.color);
 
@@ -847,6 +900,23 @@ function EventMini({ card, index, members = [], dragActiveRef, onOpen, onToggleD
               }}
             >
               ⋯
+            </button>
+
+            <button
+              type="button"
+              className="card-mini-delete-btn"
+              title={deleting ? 'Excluindo...' : 'Excluir atividade'}
+              aria-label="Excluir atividade"
+              disabled={deleting}
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+            >
+              <TrashIcon />
             </button>
           </div>
 

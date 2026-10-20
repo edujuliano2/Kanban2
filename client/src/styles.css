@@ -1433,6 +1433,32 @@ input[type='checkbox'] {
   background: rgba(16, 24, 40, 0.07);
 }
 
+.card-mini-delete-btn {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.45;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-mini-delete-btn:hover {
+  opacity: 1;
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.card-mini-delete-btn:disabled {
+  opacity: 0.25;
+  cursor: wait;
+}
+
 .event-title {
   font-size: 14px;
   font-weight: 600;
@@ -2125,6 +2151,31 @@ hr {
   border-radius: 999px;
   padding: 3px 8px;
   white-space: nowrap;
+}
+
+.calendar-event-delete {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  padding: 3px 5px;
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0.55;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-event-delete:hover {
+  opacity: 1;
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.calendar-event-delete:disabled {
+  opacity: 0.25;
+  cursor: wait;
 }
 
 .calendar-event-title {
