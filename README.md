@@ -113,6 +113,20 @@ Exemplo de resposta:
 
 O fluxo do n8n envia cada item para a API do WhatsApp com `phone` e `message`.
 
+### Fluxo do n8n
+
+O fluxo **Agenda da Família - Avisos WhatsApp** já está criado e publicado em:
+
+https://workflows.ejulian.uk/workflow/jrsPbq23vK5P6fAj
+
+Ele possui três agendamentos no fuso `America/Sao_Paulo`:
+
+- domingo às 22:00 (próximos 7 dias);
+- todos os dias às 07:00 (atividades do dia);
+- a cada 10 minutos (lembretes de eventos que começam em aproximadamente 1 hora).
+
+A chave de acesso à API está configurada no header `x-api-key` dos nós de consulta. Na Vercel, cadastre a mesma chave em `NOTIFICATIONS_API_KEY` e faça um novo deploy. Se quiser limitar os avisos à sua família, use `NOTIFICATIONS_FAMILY_ID` com o ID exibido na parte inferior da aba `Família`.
+
 ### Variáveis necessárias
 
 - `NOTIFICATIONS_API_KEY` — mesma chave usada no n8n.
