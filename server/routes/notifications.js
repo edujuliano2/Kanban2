@@ -303,7 +303,9 @@ function buildReminderMessage(member, card, participantNames) {
 router.get(
   '/status',
   asyncHandler(async (req, res) => {
-    const familyFilter = notificationFamilyId();
+    const showAll = req.query.all === '1';
+    const configuredFamilyId = notificationFamilyId();
+    const familyFilter = showAll ? null : configuredFamilyId;
     const families = await db.all(
       `SELECT families.id, families.name,
               COUNT(members.id) AS members,
@@ -318,7 +320,8 @@ router.get(
     );
 
     res.json({
-      configured_family_id: familyFilter,
+      configured_family_id: configuredFamilyId,
+      diagnostic_all: showAll,
       timezone: TIMEZONE,
       matched_families: families.length,
       families: families.map((family) => ({
