@@ -301,6 +301,38 @@ function buildReminderMessage(member, card, participantNames) {
 }
 
 router.get(
+  '/status',
+  asyncHandler(async (req, res) => {
+    const familyFilter = notificationFamilyId();
+    const families = await db.all(
+      `SELECT families.id, families.name,
+              COUNT(members.id) AS members,
+              SUM(CASE WHEN members.phone IS NOT NULL AND members.phone <> '' THEN 1 ELSE 0 END) AS with_phone,
+              SUM(CASE WHEN members.phone IS NOT NULL AND LENGTH(members.phone) BETWEEN 12 AND 15 THEN 1 ELSE 0 END) AS valid_phone
+       FROM families
+       LEFT JOIN members ON members.family_id = families.id
+       ${familyFilter ? 'WHERE families.id = ?' : ''}
+       GROUP BY families.id, families.name
+       ORDER BY families.id ASC`,
+      familyFilter ? [familyFilter] : []
+    );
+
+    res.json({
+      configured_family_id: familyFilter,
+      timezone: TIMEZONE,
+      matched_families: families.length,
+      families: families.map((family) => ({
+        id: family.id,
+        name: family.name,
+        members: Number(family.members) || 0,
+        with_phone: Number(family.with_phone) || 0,
+        valid_phone: Number(family.valid_phone) || 0
+      }))
+    });
+  })
+);
+
+router.get(
   '/daily',
   asyncHandler(async (req, res) => {
     const now = zonedNow();
