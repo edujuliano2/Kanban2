@@ -206,60 +206,84 @@ function cardLine(card) {
   return `${done}• 🕒 ${time} — ${card.title}${location} · ${category}${board}`;
 }
 
-function buildDailyMessage(member, cards, dateKey) {
-  const greeting = `🌞 *Bom dia, ${firstName(member.name)}!*`;
-  if (!cards.length) {
-    return `${greeting}\n\n🌿 Você não tem eventos nem tarefas para hoje (${weekdayLong(
-      dateKey
-    )}, ${shortDate(dateKey)}).`;
-  }
-
-  const events = cards.filter((card) => (card.card_type || 'event') === 'event');
-  const tasks = cards.filter((card) => (card.card_type || 'event') === 'task');
-  const sections = [
-    `${greeting}\nSuas atividades de ${weekdayLong(dateKey)}, ${shortDate(dateKey)}:`
-  ];
-
-  if (events.length) {
-    sections.push(`\n*📅 Eventos*\n${events.map(cardLine).join('\n')}`);
-  }
-  if (tasks.length) {
-    sections.push(`\n*✅ Tarefas*\n${tasks.map(cardLine).join('\n')}`);
-  }
-
-  sections.push('\n_Agenda da Família_');
-  return sections.join('\n');
-}
-
-function buildWeeklyMessage(member, cards, from, to) {
-  const greeting = `📆 *Olá, ${firstName(member.name)}!*`;
-  if (!cards.length) {
-    return `${greeting}\n\n🌿 Você não tem eventos nem tarefas para os próximos 7 dias.`;
+function futureEventsSection(title, events, emptyText) {
+  if (!events.length) {
+    return `*${title}*\n${emptyText}`;
   }
 
   const grouped = new Map();
-  for (const card of cards) {
+  for (const card of events) {
     const list = grouped.get(card.event_date) || [];
     list.push(card);
     grouped.set(card.event_date, list);
   }
 
-  const sections = [
-    `${greeting}\nSua agenda de ${shortDate(from)} a ${shortDate(to)}:\n`
-  ];
-
+  const lines = [`*${title}*`];
   for (const [dateKey, list] of [...grouped.entries()].sort(([a], [b]) =>
     a.localeCompare(b)
   )) {
+    lines.push(`*${weekdayLong(dateKey)}, ${shortDate(dateKey)}*`);
+    lines.push(list.map(cardLine).join('\n'));
+  }
+  return lines.join('\n');
+}
+
+function buildDailyMessage({
+  member,
+  todayCards,
+  next7Events,
+  other22Events,
+  today,
+  next7From,
+  next7To,
+  otherFrom,
+  otherTo
+}) {
+  const greeting = `🌞 *Bom dia, ${firstName(member.name)}!*`;
+
+  if (!todayCards.length && !next7Events.length && !other22Events.length) {
+    return `${greeting}\n\n🌿 Você não tem eventos nem tarefas para hoje e nenhum evento nos próximos 30 dias.`;
+  }
+
+  const sections = [greeting];
+
+  if (todayCards.length) {
+    const events = todayCards.filter((card) => (card.card_type || 'event') === 'event');
+    const tasks = todayCards.filter((card) => (card.card_type || 'event') === 'task');
+    const todayLines = [`*Hoje — ${weekdayLong(today)}, ${shortDate(today)}*`];
+
+    if (events.length) {
+      todayLines.push(`*📅 Eventos de hoje*\n${events.map(cardLine).join('\n')}`);
+    }
+    if (tasks.length) {
+      todayLines.push(`*✅ Tarefas de hoje*\n${tasks.map(cardLine).join('\n')}`);
+    }
+
+    sections.push(todayLines.join('\n'));
+  } else {
     sections.push(
-      `*${weekdayLong(dateKey)}, ${shortDate(dateKey)}*\n${list
-        .map(cardLine)
-        .join('\n')}`
+      `*Hoje — ${weekdayLong(today)}, ${shortDate(today)}*\n🌿 Nada para hoje.`
     );
   }
 
-  sections.push('\n_Agenda da Família_');
-  return sections.join('\n');
+  sections.push(
+    futureEventsSection(
+      `📆 Próximos 7 dias (${shortDate(next7From)} a ${shortDate(next7To)})`,
+      next7Events,
+      'Nenhum evento nos próximos 7 dias.'
+    )
+  );
+
+  sections.push(
+    futureEventsSection(
+      `🗓️ Outros 22 dias (${shortDate(otherFrom)} a ${shortDate(otherTo)})`,
+      other22Events,
+      'Nenhum evento nos próximos 22 dias.'
+    )
+  );
+
+  sections.push('_Agenda da Família_');
+  return sections.join('\n\n');
 }
 
 function buildReminderMessage(member, card, participantNames) {
@@ -280,10 +304,15 @@ router.get(
   '/daily',
   asyncHandler(async (req, res) => {
     const now = zonedNow();
-    const date = validDateKey(req.query.date) ? req.query.date : now.date;
+    const today = validDateKey(req.query.date) ? req.query.date : now.date;
+    const next7From = addDaysKey(today, 1);
+    const next7To = addDaysKey(today, 7);
+    const otherFrom = addDaysKey(today, 8);
+    const horizonEnd = addDaysKey(today, 29);
+
     const [members, cards] = await Promise.all([
       getMembers(),
-      getCardsInRange(date, date)
+      getCardsInRange(today, horizonEnd)
     ]);
 
     const byMember = new Map();
@@ -298,59 +327,47 @@ router.get(
     const messages = members
       .map((member) => ({ member, phone: phoneOf(member) }))
       .filter((item) => item.phone)
-      .map(({ member, phone }) => ({
-        member_id: member.id,
-        name: member.name,
-        phone,
-        date,
-        message: buildDailyMessage(member, byMember.get(member.id) || [], date)
-      }));
+      .map(({ member, phone }) => {
+        const memberCards = byMember.get(member.id) || [];
+        const todayCards = memberCards.filter((card) => card.event_date === today);
+        const futureEvents = memberCards.filter(
+          (card) =>
+            (card.card_type || 'event') === 'event' && card.event_date > today
+        );
+        const next7Events = futureEvents.filter(
+          (card) => card.event_date >= next7From && card.event_date <= next7To
+        );
+        const other22Events = futureEvents.filter(
+          (card) => card.event_date >= otherFrom && card.event_date <= horizonEnd
+        );
+
+        return {
+          member_id: member.id,
+          name: member.name,
+          phone,
+          date: today,
+          next7: { from: next7From, to: next7To },
+          other22: { from: otherFrom, to: horizonEnd },
+          message: buildDailyMessage({
+            member,
+            todayCards,
+            next7Events,
+            other22Events,
+            today,
+            next7From,
+            next7To,
+            otherFrom,
+            otherTo: horizonEnd
+          })
+        };
+      });
 
     res.json({
       mode: 'daily',
-      date,
-      timezone: TIMEZONE,
-      generated_at: new Date().toISOString(),
-      count: messages.length,
-      messages
-    });
-  })
-);
-
-router.get(
-  '/weekly',
-  asyncHandler(async (req, res) => {
-    const now = zonedNow();
-    const from = validDateKey(req.query.from) ? req.query.from : addDaysKey(now.date, 1);
-    const to = validDateKey(req.query.to) ? req.query.to : addDaysKey(now.date, 7);
-
-    const [members, cards] = await Promise.all([getMembers(), getCardsInRange(from, to)]);
-
-    const byMember = new Map();
-    for (const card of cards) {
-      for (const memberId of card.member_ids) {
-        const list = byMember.get(memberId) || [];
-        list.push(card);
-        byMember.set(memberId, list);
-      }
-    }
-
-    const messages = members
-      .map((member) => ({ member, phone: phoneOf(member) }))
-      .filter((item) => item.phone)
-      .map(({ member, phone }) => ({
-        member_id: member.id,
-        name: member.name,
-        phone,
-        from,
-        to,
-        message: buildWeeklyMessage(member, byMember.get(member.id) || [], from, to)
-      }));
-
-    res.json({
-      mode: 'weekly',
-      from,
-      to,
+      date: today,
+      horizon: { from: today, to: horizonEnd },
+      next7: { from: next7From, to: next7To },
+      other22: { from: otherFrom, to: horizonEnd },
       timezone: TIMEZONE,
       generated_at: new Date().toISOString(),
       count: messages.length,

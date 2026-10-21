@@ -79,8 +79,7 @@ MAIL_REPLY_TO=seu-email@seudominio.com
 
 O fluxo do n8n usa os telefones cadastrados em `Família` para enviar:
 
-- **Domingo às 22:00** — agenda dos próximos 7 dias de cada pessoa.
-- **Todos os dias às 07:00** — eventos e tarefas do dia. Se não houver nada, envia uma mensagem avisando que o dia está livre.
+- **Todos os dias às 07:00** — resumo com os eventos e tarefas de hoje, os eventos dos próximos 7 dias e os eventos dos outros 22 dias (horizonte de 30 dias). Se não houver nada, envia uma mensagem avisando.
 - **A cada 10 minutos** — lembrete para eventos que começam em aproximadamente 1 hora.
 
 ### Cadastro do telefone
@@ -93,7 +92,6 @@ Os endpoints ficam protegidos pela chave `NOTIFICATIONS_API_KEY`, enviada no hea
 
 ```text
 GET /api/notifications/daily
-GET /api/notifications/weekly
 GET /api/notifications/reminders
 ```
 
@@ -119,10 +117,9 @@ O fluxo **Agenda da Família - Avisos WhatsApp** já está criado e publicado em
 
 https://workflows.ejulian.uk/workflow/jrsPbq23vK5P6fAj
 
-Ele possui três agendamentos no fuso `America/Sao_Paulo`:
+Ele possui dois agendamentos no fuso `America/Sao_Paulo`:
 
-- domingo às 22:00 (próximos 7 dias);
-- todos os dias às 07:00 (atividades do dia);
+- todos os dias às 07:00 (hoje + próximos 7 dias + outros 22 dias);
 - a cada 10 minutos (lembretes de eventos que começam em aproximadamente 1 hora).
 
 A chave de acesso à API está configurada no header `x-api-key` dos nós de consulta. Na Vercel, cadastre a mesma chave em `NOTIFICATIONS_API_KEY` e faça um novo deploy. Se quiser limitar os avisos à sua família, use `NOTIFICATIONS_FAMILY_ID` com o ID exibido na parte inferior da aba `Família`.
