@@ -31,8 +31,8 @@ const timed = buildCalendarInvite({
 assert(timed.startsWith('BEGIN:VCALENDAR\r\n'), 'ICS começa com VCALENDAR e CRLF');
 assert(timed.includes('METHOD:REQUEST\r\n'), 'método REQUEST');
 assert(timed.includes('UID:card-42@agenda-familia.local\r\n'), 'UID estável por evento');
-assert(timed.includes('DTSTART:20261019T090000\r\n'), 'horário inicial');
-assert(timed.includes('DTEND:20261019T103000\r\n'), 'horário final');
+assert(timed.includes('DTSTART:20261019T120000Z\r\n'), 'horário inicial convertido para UTC');
+assert(timed.includes('DTEND:20261019T133000Z\r\n'), 'horário final convertido para UTC');
 assert(timed.includes('SUMMARY:Consulta em família\\, com todos'), 'vírgula escapada no título');
 assert(timed.includes('LOCATION:Clínica\\; Centro'), 'ponto e vírgula escapado no local');
 assert(timed.includes('ATTENDEE;CN=Eduardo'), 'primeiro participante');
@@ -90,7 +90,7 @@ const noEnd = buildCalendarInvite({
   members: [members[0]]
 });
 
-assert(noEnd.includes('DTEND:20261021T100000\r\n'), 'sem fim, assume uma hora de duração');
+assert(noEnd.includes('DTEND:20261021T130000Z\r\n'), 'sem fim, assume uma hora de duração');
 
 const overnight = buildCalendarInvite({
   card: {
@@ -106,6 +106,26 @@ const overnight = buildCalendarInvite({
   members: [members[0]]
 });
 
-assert(overnight.includes('DTEND:20261022T010000\r\n'), 'evento que atravessa a meia-noite');
+assert(overnight.includes('DTEND:20261022T040000Z\r\n'), 'evento que atravessa a meia-noite');
+
+const newYorkSummer = buildCalendarInvite({
+  card: {
+    id: 46,
+    title: 'Reunião em Nova York',
+    event_date: '2026-07-01',
+    start_time: '09:00',
+    end_time: '10:00',
+    location: '',
+    category: 'trabalho',
+    description: ''
+  },
+  members: [members[0]],
+  timeZone: 'America/New_York'
+});
+
+assert(
+  newYorkSummer.includes('DTSTART:20260701T130000Z\r\n'),
+  'converte horário de verão de outro fuso para UTC'
+);
 
 console.log('\nGeração de convites de calendário validada.');

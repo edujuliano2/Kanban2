@@ -58,6 +58,53 @@ function addOneHour(time) {
   return `${pad(Math.floor(total / 60))}:${pad(total % 60)}`;
 }
 
+function safeTimeZone(value) {
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: value }).format();
+    return value;
+  } catch {
+    return 'America/Sao_Paulo';
+  }
+}
+
+function timeZoneOffsetMs(date, timeZone) {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23'
+  });
+  const parts = Object.fromEntries(
+    formatter.formatToParts(date).map((part) => [part.type, part.value])
+  );
+  const asUTC = Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    Number(parts.hour),
+    Number(parts.minute),
+    Number(parts.second)
+  );
+  return asUTC - date.getTime();
+}
+
+function zonedDateTimeToUtc(dateKey, time, timeZone) {
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const [hour, minute] = time.split(':').map(Number);
+  const localAsUtc = Date.UTC(year, month - 1, day, hour, minute, 0);
+
+  let offset = timeZoneOffsetMs(new Date(localAsUtc), timeZone);
+  let utc = localAsUtc - offset;
+  offset = timeZoneOffsetMs(new Date(utc), timeZone);
+  utc = localAsUtc - offset;
+
+  return new Date(utc);
+}
+
 function memberEmails(members = []) {
   const seen = new Set();
   return members.filter((member) => {
@@ -75,9 +122,11 @@ function buildCalendarInvite({
   organizerEmail = 'agenda@familia.local',
   organizerName = 'Agenda da Família',
   appUrl = '',
+  timeZone = 'America/Sao_Paulo',
   sequence
 }) {
   const action = String(method).toUpperCase();
+  const zone = safeTimeZone(timeZone);
   const recipients = memberEmails(members);
   const attendeeLines = recipients.map(
     (member) =>
@@ -112,8 +161,8 @@ function buildCalendarInvite({
         endDate = addDaysKey(card.event_date, 1);
       }
 
-      lines.push(`DTSTART:${dateDigits(card.event_date)}T${start.replace(':', '')}00`);
-      lines.push(`DTEND:${dateDigits(endDate)}T${end.replace(':', '')}00`);
+      lines.push(`DTSTART:${utcStamp(zonedDateTimeToUtc(card.event_date, start, zone))}`);
+      lines.push(`DTEND:${utcStamp(zonedDateTimeToUtc(endDate, end, zone))}`);
     } else {
       lines.push(`DTSTART;VALUE=DATE:${dateDigits(card.event_date)}`);
       lines.push(`DTEND;VALUE=DATE:${dateDigits(addDaysKey(card.event_date, 1))}`);
@@ -138,5 +187,6 @@ module.exports = {
   buildCalendarInvite,
   memberEmails,
   escapeText,
-  addOneHour
+  addOneHour,
+  zonedDateTimeToUtc
 };

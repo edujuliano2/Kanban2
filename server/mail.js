@@ -61,6 +61,7 @@ function getMailConfig() {
     from,
     organizerEmail,
     appUrl,
+    timeZone: process.env.APP_TIMEZONE || 'America/Sao_Paulo',
     smtp,
     resendApiKey: process.env.RESEND_API_KEY || '',
     replyTo: process.env.MAIL_REPLY_TO || ''
@@ -269,7 +270,8 @@ async function sendCalendarInvites({ card, members = [], method = 'REQUEST' }) {
     members: recipients,
     method,
     organizerEmail: config.organizerEmail,
-    appUrl: config.appUrl
+    appUrl: config.appUrl,
+    timeZone: config.timeZone
   });
 
   const message = buildMessage({ card, recipients, method, config });
