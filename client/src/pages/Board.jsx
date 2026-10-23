@@ -5,7 +5,6 @@ import { api } from '../api';
 import { useAuth } from '../auth';
 import { contrastColor, memberColor } from '../colors';
 import { CATEGORIES, categoryOf } from '../categories';
-import { formatDateTime, isOverdue } from '../datetime';
 import MemberStack from '../components/MemberStack';
 import MemberPicker from '../components/MemberPicker';
 import TrashIcon from '../components/TrashIcon';
@@ -94,9 +93,9 @@ export default function Board() {
   async function loadBoard() {
     setLoading(true);
     try {
-      const [boardData, memberList] = await Promise.all([api.getBoard(id), api.getMembers()]);
+      const boardData = await api.getBoard(id);
       setBoard(boardData);
-      setMembers(memberList);
+      setMembers(boardData.members || (await api.getMembers()));
       setError('');
     } catch (err) {
       setError(err.message);
@@ -974,6 +973,7 @@ function EventMini({
   const category = categoryOf(card.category);
   const color = memberColor(members[0]?.color);
   const isTask = (card.card_type || 'event') === 'task';
+  const isDone = isTask && card.done;
 
   return (
     <Draggable draggableId={String(card.id)} index={index}>
@@ -984,7 +984,7 @@ function EventMini({
           {...dragProvided.dragHandleProps}
           className={`card-mini event-mini${isTask ? ' is-task' : ''}${
             dragSnapshot.isDragging ? ' dragging' : ''
-          }${card.done ? ' done' : ''}`}
+          }${isDone ? ' done' : ''}`}
           style={{
             ...dragProvided.draggableProps.style,
             borderLeftColor: color
@@ -995,17 +995,19 @@ function EventMini({
           }}
         >
           <div className="event-top">
-            <button
-              type="button"
-              className={`done-toggle${card.done ? ' checked' : ''}`}
-              title={card.done ? 'Marcar como pendente' : 'Marcar como concluído'}
-              aria-label={card.done ? 'Marcar como pendente' : 'Marcar como concluído'}
-              onMouseDown={(e) => e.stopPropagation()}
-              onTouchStart={(e) => e.stopPropagation()}
-              onClick={onToggleDone}
-            >
-              ✓
-            </button>
+            {isTask && (
+              <button
+                type="button"
+                className={`done-toggle${isDone ? ' checked' : ''}`}
+                title={isDone ? 'Marcar como pendente' : 'Marcar como concluída'}
+                aria-label={isDone ? 'Marcar como pendente' : 'Marcar como concluída'}
+                onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+                onClick={onToggleDone}
+              >
+                ✓
+              </button>
+            )}
 
             {isTask ? (
               <span className="event-time task">Tarefa</span>
@@ -1059,15 +1061,6 @@ function EventMini({
           </div>
 
           <span className="event-title">{card.title}</span>
-
-          {card.remind_at && (
-            <span
-              className={`event-reminder${isOverdue(card.remind_at) ? ' overdue' : ''}`}
-              title={`Lembrete: ${formatDateTime(card.remind_at)}`}
-            >
-              ⏰ {formatDateTime(card.remind_at)}
-            </span>
-          )}
 
           {(members.length > 0 || card.location) && (
             <div className="event-meta">

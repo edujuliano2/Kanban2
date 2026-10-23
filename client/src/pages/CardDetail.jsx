@@ -5,9 +5,50 @@ import { memberColor } from '../colors';
 import { CATEGORIES, categoryOf } from '../categories';
 import MemberStack from '../components/MemberStack';
 import MemberPicker from '../components/MemberPicker';
-import { inviteMessage } from '../invites';
-import { formatDateTime, toLocalInput, isOverdue } from '../datetime';
 import { formatDateLong, formatTimestamp } from '../dates';
+
+function formFromCard(card) {
+  return {
+    title: card.title || '',
+    description: card.description || '',
+    type: card.card_type || 'event',
+    event_date: card.event_date || '',
+    start_time: card.start_time || '',
+    end_time: card.end_time || '',
+    category: card.category || 'outro',
+    location: card.location || '',
+    member_ids: card.member_ids?.length
+      ? card.member_ids
+      : card.member_id
+        ? [card.member_id]
+        : []
+  };
+}
+
+function saveMessage(invite) {
+  if (!invite) return 'Alterações salvas.';
+  if (invite.reason === 'not-configured') {
+    return 'Alterações salvas. O envio de e-mail ainda não está configurado.';
+  }
+  if (invite.reason === 'no-recipients') {
+    return 'Alterações salvas. Nenhum participante com e-mail para atualizar o convite.';
+  }
+  if (invite.reason === 'no-date') {
+    return 'Alterações salvas. Defina uma data para atualizar o convite.';
+  }
+
+  const parts = ['Alterações salvas.'];
+  if (invite.sent?.length) {
+    parts.push(`Convite atualizado para ${invite.sent.map((item) => item.name).join(', ')}.`);
+  }
+  if (invite.errors?.length) {
+    parts.push(`Falha ao atualizar para ${invite.errors.map((item) => item.name).join(', ')}.`);
+  }
+  if (invite.skipped?.length) {
+    parts.push(`Sem e-mail: ${invite.skipped.map((item) => item.name).join(', ')}.`);
+  }
+  return parts.join(' ');
+}
 
 export default function CardDetail() {
   const { id } = useParams();
@@ -15,31 +56,21 @@ export default function CardDetail() {
 
   const [card, setCard] = useState(null);
   const [members, setMembers] = useState([]);
+  const [form, setForm] = useState(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
-  const [sendingInvites, setSendingInvites] = useState(false);
-
-  const [editingTitle, setEditingTitle] = useState(false);
-  const [title, setTitle] = useState('');
-
-  const [desc, setDesc] = useState('');
-  const [editingDesc, setEditingDesc] = useState(false);
-  const [location, setLocation] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const [comment, setComment] = useState('');
   const [checkItem, setCheckItem] = useState('');
-  const [remindInput, setRemindInput] = useState('');
-  const [savingRemind, setSavingRemind] = useState(false);
 
   async function loadCard() {
     try {
-      const [data, memberList] = await Promise.all([api.getCard(id), api.getMembers()]);
+      const data = await api.getCard(id);
       setCard(data);
-      setMembers(memberList);
-      setTitle(data.title);
-      setDesc(data.description || '');
-      setLocation(data.location || '');
-      setRemindInput(toLocalInput(data.remind_at));
+      setMembers(data.members || (await api.getMembers()));
+      setForm(formFromCard(data));
       setError('');
     } catch (err) {
       setError(err.message);
@@ -50,153 +81,136 @@ export default function CardDetail() {
     loadCard();
   }, [id]);
 
-  async function patch(payload) {
-    setCard((prev) => ({ ...prev, ...payload }));
-    try {
-      const updated = await api.updateCard(id, payload);
-      setCard(updated);
-      setTitle(updated.title);
-      setDesc(updated.description || '');
-      setLocation(updated.location || '');
-      if (updated.invite) setNotice(inviteMessage(updated.invite));
-    } catch (err) {
-      setError(err.message);
-      loadCard();
+  function setField(name, value) {
+    setForm((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function toggleMember(memberId) {
+    setForm((prev) => ({
+      ...prev,
+      member_ids: prev.member_ids.includes(memberId)
+        ? prev.member_ids.filter((value) => value !== memberId)
+        : [...prev.member_ids, memberId]
+    }));
+  }
+
+  async function handleSave(e) {
+    if (e?.preventDefault) e.preventDefault();
+    if (!form.title.trim()) {
+      setError('O título não pode ficar vazio.');
+      return;
     }
-  }
 
-  function saveTitle() {
-    if (title.trim() && title.trim() !== card.title) {
-      patch({ title: title.trim() });
-    } else {
-      setTitle(card.title);
-    }
-    setEditingTitle(false);
-  }
-
-  function saveDesc() {
-    patch({ description: desc });
-    setEditingDesc(false);
-  }
-
-  function saveLocation() {
-    if (location !== (card.location || '')) {
-      patch({ location });
-    }
-  }
-
-  async function saveReminder() {
-    if (!remindInput) return clearReminder();
-
-    setSavingRemind(true);
+    setSaving(true);
     setError('');
+    setNotice('');
+
     try {
+      const isTask = form.type === 'task';
       const updated = await api.updateCard(id, {
-        remind_at: new Date(remindInput).toISOString()
+        title: form.title.trim(),
+        description: form.description,
+        type: form.type,
+        event_date: form.event_date || null,
+        start_time: isTask ? null : form.start_time || null,
+        end_time: isTask ? null : form.end_time || null,
+        category: form.category,
+        location: form.location,
+        member_ids: form.member_ids,
+        send_invites: !isTask
       });
+
       setCard(updated);
-      setRemindInput(toLocalInput(updated.remind_at));
-      setNotice('Lembrete salvo.');
+      setForm(formFromCard(updated));
+      setNotice(isTask ? 'Tarefa salva.' : saveMessage(updated.invite));
     } catch (err) {
       setError(err.message);
     } finally {
-      setSavingRemind(false);
+      setSaving(false);
     }
   }
 
-  async function clearReminder() {
-    setSavingRemind(true);
+  async function toggleTaskDone() {
     setError('');
     try {
-      const updated = await api.updateCard(id, { remind_at: null });
+      const updated = await api.updateCard(id, { done: !card.done });
       setCard(updated);
-      setRemindInput('');
-      setNotice('Lembrete removido.');
+      setNotice(updated.done ? 'Tarefa concluída.' : 'Tarefa reaberta.');
     } catch (err) {
       setError(err.message);
-    } finally {
-      setSavingRemind(false);
     }
+  }
+
+  function handleDiscard() {
+    setForm(formFromCard(card));
+    setError('');
+    setNotice('Alterações descartadas.');
   }
 
   async function handleDelete() {
     if (!window.confirm('Excluir esta atividade da agenda?')) return;
+
+    setDeleting(true);
     const boardId = card.board_id;
     try {
       await api.deleteCard(id);
       navigate(`/board/${boardId}`);
     } catch (err) {
       setError(err.message);
+      setDeleting(false);
     }
   }
 
   async function handleComment(e) {
     e.preventDefault();
     if (!comment.trim()) return;
-    setCard(await api.addComment(id, comment));
-    setComment('');
-  }
-
-  function toggleMember(memberId) {
-    const current = card.member_ids?.length
-      ? card.member_ids
-      : card.member_id
-        ? [card.member_id]
-        : [];
-    const next = current.includes(memberId)
-      ? current.filter((idValue) => idValue !== memberId)
-      : [...current, memberId];
-    patch({ member_ids: next });
-  }
-
-  async function resendInvites() {
-    setSendingInvites(true);
-    setError('');
-    setNotice('');
     try {
-      const updated = await api.updateCard(id, { send_invites: true });
-      setCard(updated);
-      const message =
-        updated.invite?.reason === 'no-recipients'
-          ? 'Nenhum participante com e-mail cadastrado para receber o convite.'
-          : inviteMessage(updated.invite);
-      setNotice(message || 'Convites processados.');
+      setCard(await api.addComment(id, comment));
+      setComment('');
     } catch (err) {
       setError(err.message);
-    } finally {
-      setSendingInvites(false);
     }
   }
 
   async function handleAddCheck(e) {
     e.preventDefault();
     if (!checkItem.trim()) return;
-    setCard(await api.addChecklistItem(id, checkItem));
-    setCheckItem('');
+    try {
+      setCard(await api.addChecklistItem(id, checkItem));
+      setCheckItem('');
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
   async function toggleCheck(itemId, checked) {
-    setCard(await api.updateChecklistItem(itemId, { checked: !checked }));
+    try {
+      setCard(await api.updateChecklistItem(itemId, { checked: !checked }));
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
   async function removeCheck(itemId) {
-    setCard(await api.deleteChecklistItem(itemId));
+    try {
+      setCard(await api.deleteChecklistItem(itemId));
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
-  if (error && !card) return <div className="page"><p className="error">{error}</p></div>;
-  if (!card) return <div className="page">Carregando...</div>;
+  if (error && (!card || !form)) {
+    return <div className="page"><p className="error">{error}</p></div>;
+  }
+  if (!card || !form) return <div className="page">Carregando...</div>;
 
-  const participantIds = card.member_ids?.length
-    ? card.member_ids
-    : card.member_id
-      ? [card.member_id]
-      : [];
+  const isTask = form.type === 'task';
+  const participantIds = form.member_ids || [];
   const participants = participantIds
     .map((memberId) => members.find((item) => item.id === memberId))
     .filter(Boolean);
   const accent = memberColor(participants[0]?.color);
-  const isTask = (card.card_type || 'event') === 'task';
-  const category = categoryOf(card.category);
+  const category = categoryOf(form.category);
   const doneCount = card.checklist.filter((item) => item.checked).length;
   const progress = card.checklist.length
     ? Math.round((doneCount / card.checklist.length) * 100)
@@ -212,15 +226,26 @@ export default function CardDetail() {
           <h1>Detalhes da atividade</h1>
         </div>
         <div className="topbar-actions">
+          {isTask && (
+            <button type="button" className="btn" onClick={toggleTaskDone}>
+              {card.done ? '↩ Reabrir tarefa' : '✓ Concluir tarefa'}
+            </button>
+          )}
           <button
             type="button"
-            className={`btn${card.done ? '' : ' primary'}`}
-            onClick={() => patch({ done: !card.done })}
+            className="btn primary"
+            onClick={handleSave}
+            disabled={saving}
           >
-            {card.done ? '↩ Reabrir' : '✓ Concluir'}
+            {saving ? 'Salvando...' : 'Salvar alterações'}
           </button>
-          <button type="button" className="btn danger" onClick={handleDelete}>
-            Excluir
+          <button
+            type="button"
+            className="btn danger"
+            onClick={handleDelete}
+            disabled={deleting}
+          >
+            {deleting ? 'Excluindo...' : 'Excluir'}
           </button>
         </div>
       </header>
@@ -229,238 +254,129 @@ export default function CardDetail() {
       {notice && <p className="notice">{notice}</p>}
 
       <div
-        className={`event-detail${card.done ? ' done' : ''}`}
+        className={`event-detail${isTask && card.done ? ' done' : ''}`}
         style={{ borderTopColor: accent }}
       >
         <div className="event-detail-head">
           <MemberStack members={participants} max={4} size="large" />
           <div className="event-detail-title">
-            {editingTitle ? (
-              <form
-                className="inline-form"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  saveTitle();
-                }}
-              >
-                <input
-                  autoFocus
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-                <div className="row gap">
-                  <button type="submit" className="btn primary small">Salvar</button>
-                  <button
-                    type="button"
-                    className="btn small"
-                    onClick={() => {
-                      setTitle(card.title);
-                      setEditingTitle(false);
-                    }}
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </form>
-            ) : (
+            <input
+              className="detail-title-input"
+              type="text"
+              value={form.title}
+              onChange={(e) => setField('title', e.target.value)}
+              placeholder="Título do evento ou tarefa"
+              aria-label="Título"
+            />
+            <div className="event-detail-sub">
+              <span className={`type-pill ${isTask ? 'task' : 'event'}`}>
+                {isTask ? '✅ Tarefa' : '📅 Evento'}
+              </span>
+              <span>{category.icon} {category.label}</span>
+              {form.event_date && <span>📅 {formatDateLong(form.event_date)}</span>}
+              {!isTask && form.start_time && (
+                <span>
+                  🕒 {form.start_time}
+                  {form.end_time ? `–${form.end_time}` : ''}
+                </span>
+              )}
+              {isTask && !!card.done && <span className="done-pill">Concluída</span>}
+            </div>
+          </div>
+        </div>
+
+        <form className="detail-form" onSubmit={handleSave}>
+          <div className="form-grid detail-grid">
+            <label className="field">
+              <span>Tipo</span>
+              <select value={form.type} onChange={(e) => setField('type', e.target.value)}>
+                <option value="event">📅 Evento</option>
+                <option value="task">✅ Tarefa</option>
+              </select>
+            </label>
+
+            <label className="field">
+              <span>{isTask ? 'Dia da tarefa' : 'Data'}</span>
+              <input
+                type="date"
+                value={form.event_date}
+                onChange={(e) => setField('event_date', e.target.value)}
+              />
+            </label>
+
+            {!isTask && (
               <>
-                <h2>{card.title}</h2>
-                <div className="event-detail-sub">
-                  <span className={`type-pill ${isTask ? 'task' : 'event'}`}>
-                    {isTask ? '✅ Tarefa' : '📅 Evento'}
-                  </span>
-                  <span>{category.icon} {category.label}</span>
-                  {card.event_date && <span>📅 {formatDateLong(card.event_date)}</span>}
-                  {card.start_time && (
-                    <span>
-                      🕒 {card.start_time}
-                      {card.end_time ? `–${card.end_time}` : ''}
-                    </span>
-                  )}
-                  {!!card.done && <span className="done-pill">Concluída</span>}
-                </div>
-                <button
-                  type="button"
-                  className="btn text small"
-                  onClick={() => setEditingTitle(true)}
-                >
-                  Editar título
-                </button>
+                <label className="field">
+                  <span>Início</span>
+                  <input
+                    type="time"
+                    value={form.start_time}
+                    onChange={(e) => setField('start_time', e.target.value)}
+                  />
+                </label>
+
+                <label className="field">
+                  <span>Fim</span>
+                  <input
+                    type="time"
+                    value={form.end_time}
+                    onChange={(e) => setField('end_time', e.target.value)}
+                  />
+                </label>
               </>
             )}
-          </div>
-        </div>
 
-        <div className="form-grid detail-grid">
-          <label className="field">
-            <span>Tipo</span>
-            <select
-              value={card.card_type || 'event'}
-              onChange={(e) => patch({ type: e.target.value })}
-            >
-              <option value="event">📅 Evento</option>
-              <option value="task">✅ Tarefa</option>
-            </select>
-          </label>
+            <label className="field">
+              <span>Categoria</span>
+              <select value={form.category} onChange={(e) => setField('category', e.target.value)}>
+                {CATEGORIES.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.icon} {item.label}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-          <label className="field">
-            <span>{isTask ? 'Dia da tarefa' : 'Data'}</span>
-            <input
-              type="date"
-              value={card.event_date || ''}
-              onChange={(e) => patch({ event_date: e.target.value || null })}
-            />
-          </label>
-
-          {!isTask && (
-            <>
-              <label className="field">
-                <span>Início</span>
-                <input
-                  type="time"
-                  value={card.start_time || ''}
-                  onChange={(e) => patch({ start_time: e.target.value || null })}
-                />
-              </label>
-
-              <label className="field">
-                <span>Fim</span>
-                <input
-                  type="time"
-                  value={card.end_time || ''}
-                  onChange={(e) => patch({ end_time: e.target.value || null })}
-                />
-              </label>
-            </>
-          )}
-
-          <label className="field">
-            <span>Categoria</span>
-            <select
-              value={card.category || 'outro'}
-              onChange={(e) => patch({ category: e.target.value })}
-            >
-              {CATEGORIES.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.icon} {item.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="field">
-            <span>Local</span>
-            <input
-              type="text"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              onBlur={saveLocation}
-              placeholder="Ex: Escola, clínica, casa da vó"
-            />
-          </label>
-        </div>
-
-        <div className="field participant-field">
-          <span>{isTask ? 'Responsáveis pela tarefa' : 'Quem participa'}</span>
-          <MemberPicker
-            members={members}
-            selected={participantIds}
-            onToggle={toggleMember}
-          />
-          {!isTask && (
-            <div className="invite-actions">
-              <button
-                type="button"
-                className="btn small"
-                onClick={resendInvites}
-                disabled={sendingInvites}
-              >
-                📨 {sendingInvites ? 'Enviando...' : 'Reenviar convites'}
-              </button>
-              <span className="muted small">
-                Envia o convite de calendário para o e-mail cadastrado de cada participante.
-              </span>
-            </div>
-          )}
-        </div>
-
-        <section className="section">
-          <h3>Detalhes</h3>
-          {editingDesc ? (
-            <form
-              className="inline-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                saveDesc();
-              }}
-            >
-              <textarea
-                autoFocus
-                rows={4}
-                value={desc}
-                onChange={(e) => setDesc(e.target.value)}
-                placeholder="O que precisa ser lembrado?"
+            <label className="field">
+              <span>Local</span>
+              <input
+                type="text"
+                value={form.location}
+                onChange={(e) => setField('location', e.target.value)}
+                placeholder="Ex: Escola, clínica, casa da vó"
               />
-              <div className="row gap">
-                <button type="submit" className="btn primary small">Salvar</button>
-                <button
-                  type="button"
-                  className="btn small"
-                  onClick={() => {
-                    setDesc(card.description || '');
-                    setEditingDesc(false);
-                  }}
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
-          ) : (
-            <p className="prewrap detail-text" onClick={() => setEditingDesc(true)}>
-              {card.description || (
-                <span className="muted">Sem detalhes. Clique para escrever.</span>
-              )}
-            </p>
-          )}
-        </section>
-
-        <section className="section">
-          <h3>Lembrete</h3>
-          <div className="reminder-form">
-            <input
-              type="datetime-local"
-              value={remindInput}
-              onChange={(e) => setRemindInput(e.target.value)}
-            />
-            <div className="row gap">
-              <button
-                type="button"
-                className="btn primary small"
-                disabled={savingRemind || !remindInput}
-                onClick={saveReminder}
-              >
-                Salvar lembrete
-              </button>
-              {card.remind_at && (
-                <button
-                  type="button"
-                  className="btn small"
-                  disabled={savingRemind}
-                  onClick={clearReminder}
-                >
-                  Remover
-                </button>
-              )}
-            </div>
+            </label>
           </div>
-          {card.remind_at && (
-            <p className={`reminder-status${isOverdue(card.remind_at) ? ' overdue' : ''}`}>
-              {isOverdue(card.remind_at) ? 'Vencido' : 'Agendado para'}:{' '}
-              {formatDateTime(card.remind_at)}
-            </p>
-          )}
-        </section>
+
+          <div className="field participant-field">
+            <span>{isTask ? 'Responsáveis pela tarefa' : 'Quem participa'}</span>
+            <MemberPicker members={members} selected={participantIds} onToggle={toggleMember} />
+            <small className="field-hint">
+              {isTask
+                ? 'Você pode direcionar a tarefa para outra pessoa sem se incluir.'
+                : 'Ao salvar, os convites de calendário serão atualizados para os participantes com e-mail.'}
+            </small>
+          </div>
+
+          <label className="field">
+            <span>Detalhes</span>
+            <textarea
+              rows={4}
+              value={form.description}
+              onChange={(e) => setField('description', e.target.value)}
+              placeholder="O que precisa ser lembrado?"
+            />
+          </label>
+
+          <div className="row gap detail-actions">
+            <button type="submit" className="btn primary" disabled={saving}>
+              {saving ? 'Salvando...' : 'Salvar alterações'}
+            </button>
+            <button type="button" className="btn" onClick={handleDiscard} disabled={saving}>
+              Descartar alterações
+            </button>
+          </div>
+        </form>
 
         <section className="section">
           <div className="section-head">

@@ -19,12 +19,12 @@ export default function Boards() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const today = todayKey();
-    Promise.all([api.getBoards(), api.getMembers(), api.getAgenda(today, today)])
-      .then(([boardList, memberList, events]) => {
-        setBoards(boardList);
-        setMembers(memberList);
-        setTodayEvents(events);
+    api
+      .getDashboard(todayKey())
+      .then((data) => {
+        setBoards(data.boards);
+        setMembers(data.members);
+        setTodayEvents(data.todayEvents);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -44,7 +44,10 @@ export default function Boards() {
   }
 
   const memberById = new Map(members.map((member) => [member.id, member]));
-  const pendingToday = todayEvents.filter((event) => !event.done);
+  const pendingToday = todayEvents.filter((event) => {
+    const isTask = (event.card_type || 'event') === 'task';
+    return isTask ? !event.done : true;
+  });
 
   return (
     <div className="page">
@@ -112,6 +115,7 @@ export default function Boards() {
               <ul className="today-list">
                 {todayEvents.map((event) => {
                   const isTask = (event.card_type || 'event') === 'task';
+                  const isDone = isTask && event.done;
                   const eventMemberIds = event.member_ids?.length
                     ? event.member_ids
                     : event.member_id
@@ -124,7 +128,7 @@ export default function Boards() {
                   return (
                     <li
                       key={event.id}
-                      className={`today-event${event.done ? ' done' : ''}`}
+                      className={`today-event${isDone ? ' done' : ''}`}
                       onClick={() => navigate(`/board/card/${event.id}`)}
                       role="button"
                       tabIndex={0}

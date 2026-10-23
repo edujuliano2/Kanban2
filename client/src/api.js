@@ -40,6 +40,10 @@ export const api = {
   joinFamily: (code) => request('/family/join', { method: 'POST', body: { code } }),
 
   getBoards: () => request('/boards'),
+  getDashboard: (date) => {
+    const params = date ? `?date=${encodeURIComponent(date)}` : '';
+    return request(`/dashboard${params}`);
+  },
   createBoard: (name, description) =>
     request('/boards', { method: 'POST', body: { name, description } }),
   getBoard: (id) => request(`/boards/${id}`),
@@ -59,7 +63,6 @@ export const api = {
   deleteMember: (id) => request(`/members/${id}`, { method: 'DELETE' }),
 
   getCard: (id) => request(`/cards/${id}`),
-  getReminders: () => request('/cards/reminders'),
   updateCard: (id, payload) => request(`/cards/${id}`, { method: 'PUT', body: payload }),
   deleteCard: (id) => request(`/cards/${id}`, { method: 'DELETE' }),
   addComment: (id, content) =>

@@ -15,7 +15,9 @@ Aplicação de agenda familiar que mantém a essência visual de um Kanban: cada
   - **Evento**: tem data, horário, participantes e pode enviar convite de calendário.
   - **Tarefa**: tem um dia, não tem horário e pode ser compartilhada ou direcionada a outro membro — inclusive sem incluir quem criou.
 - **Convites de calendário por e-mail**: ao criar um evento, o sistema envia um arquivo `.ics` para o e-mail de cada participante, permitindo adicionar o compromisso à agenda do Gmail, Outlook etc.
-- **Reenviar convites** ou **cancelar** a atividade (o cancelamento também é enviado por e-mail).
+- **Atualização de convites**: ao editar e salvar um evento, os convites já enviados são atualizados automaticamente para os participantes.
+- **Cancelamento**: ao excluir um evento, os participantes recebem o cancelamento por e-mail.
+- **Conclusão de tarefas**: apenas tarefas podem ser concluídas; eventos não usam mais essa ação.
 - **Checklist "O que levar / preparar"** e **recados da família** em cada atividade.
 - **Resumo do dia** na tela inicial, reunindo eventos e tarefas de todas as agendas.
 - **Múltiplas agendas** (por exemplo, "Rotina da família", "Escola das meninas", "Trabalho"), com nome e descrição editáveis.

@@ -53,11 +53,12 @@ export default function Calendar() {
     let cancelled = false;
     setLoading(true);
 
-    Promise.all([api.getAgenda(from, to), api.getMembers()])
-      .then(([eventList, memberList]) => {
+    api
+      .getAgenda(from, to)
+      .then((data) => {
         if (cancelled) return;
-        setEvents(eventList);
-        setMembers(memberList);
+        setEvents(data.events);
+        setMembers(data.members);
         setError('');
       })
       .catch((err) => {
@@ -332,6 +333,7 @@ export default function Calendar() {
                   {day.events.map((event) => {
                     const category = categoryOf(event.category);
                     const isTask = (event.card_type || 'event') === 'task';
+                    const isDone = isTask && event.done;
                     const eventMembers = eventMemberIds(event)
                       .map((memberId) => memberById.get(memberId))
                       .filter(Boolean);
@@ -341,7 +343,7 @@ export default function Calendar() {
                       <article
                         key={event.id}
                         className={`calendar-event${isTask ? ' is-task' : ''}${
-                          event.done ? ' done' : ''
+                          isDone ? ' done' : ''
                         }`}
                         style={{ borderLeftColor: accent }}
                         role="button"

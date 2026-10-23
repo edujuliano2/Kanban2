@@ -37,11 +37,18 @@ async function initPgSchema() {
     ALTER TABLE cards ADD COLUMN IF NOT EXISTS done INTEGER NOT NULL DEFAULT 0;
     ALTER TABLE cards ADD COLUMN IF NOT EXISTS remind_at TIMESTAMPTZ;
     CREATE INDEX IF NOT EXISTS idx_members_family ON members(family_id);
+    CREATE INDEX IF NOT EXISTS idx_members_linked_user ON members(linked_user_id);
+    CREATE INDEX IF NOT EXISTS idx_members_user ON members(user_id);
     CREATE INDEX IF NOT EXISTS idx_boards_family ON boards(family_id);
+    CREATE INDEX IF NOT EXISTS idx_boards_user ON boards(user_id);
+    CREATE INDEX IF NOT EXISTS idx_lists_board ON lists(board_id);
+    CREATE INDEX IF NOT EXISTS idx_cards_list ON cards(list_id);
     CREATE INDEX IF NOT EXISTS idx_cards_event_date ON cards(event_date);
     CREATE INDEX IF NOT EXISTS idx_cards_remind_at ON cards(remind_at);
     CREATE INDEX IF NOT EXISTS idx_cards_type ON cards(card_type);
     CREATE INDEX IF NOT EXISTS idx_card_members_member ON card_members(member_id);
+    CREATE INDEX IF NOT EXISTS idx_comments_card ON comments(card_id);
+    CREATE INDEX IF NOT EXISTS idx_checklist_card ON checklist_items(card_id);
   `);
 }
 

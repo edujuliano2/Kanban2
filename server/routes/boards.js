@@ -62,15 +62,21 @@ router.get('/:id', asyncHandler(async (req, res) => {
     return res.status(404).json({ error: 'Agenda não encontrada' });
   }
 
-  const cards = await db.all(
-    `SELECT cards.* FROM cards
-     JOIN lists ON lists.id = cards.list_id
-     WHERE lists.board_id = ?
-     ORDER BY cards.event_date ASC, cards.start_time ASC, cards.position ASC, cards.id ASC`,
-    [board.id]
-  );
+  const [cards, members] = await Promise.all([
+    db.all(
+      `SELECT cards.* FROM cards
+       JOIN lists ON lists.id = cards.list_id
+       WHERE lists.board_id = ?
+       ORDER BY cards.event_date ASC, cards.start_time ASC, cards.position ASC, cards.id ASC`,
+      [board.id]
+    ),
+    db.all(
+      'SELECT * FROM members WHERE family_id = ? ORDER BY position ASC, id ASC',
+      [req.user.family_id]
+    )
+  ]);
 
-  res.json({ ...board, cards: await attachMemberIds(cards) });
+  res.json({ ...board, cards: await attachMemberIds(cards), members });
 }));
 
 router.post('/', asyncHandler(async (req, res) => {

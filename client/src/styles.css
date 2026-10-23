@@ -1646,6 +1646,28 @@ input[type='checkbox'] {
   letter-spacing: -0.5px;
 }
 
+.detail-title-input {
+  width: 100%;
+  margin-left: -6px;
+  padding: 3px 6px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.detail-title-input:hover {
+  border-color: var(--border);
+}
+
+.detail-title-input:focus {
+  background: var(--panel);
+  border-color: var(--primary);
+}
+
 .event-detail-sub {
   display: flex;
   flex-wrap: wrap;
@@ -1670,6 +1692,14 @@ input[type='checkbox'] {
   margin-top: 24px;
   padding-top: 20px;
   border-top: 1px solid var(--border);
+}
+
+.detail-form {
+  margin-top: 4px;
+}
+
+.detail-actions {
+  margin-top: 18px;
 }
 
 .section {
@@ -1926,46 +1956,6 @@ hr {
   .today-board {
     display: none;
   }
-}
-
-/* ---------- Lembretes ---------- */
-
-.event-reminder {
-  align-self: flex-start;
-  font-size: 10.5px;
-  line-height: 1;
-  padding: 3px 6px;
-  border-radius: 6px;
-  background: rgba(16, 24, 40, 0.08);
-  color: var(--muted);
-  white-space: nowrap;
-}
-
-.event-reminder.overdue {
-  background: var(--danger);
-  color: #fff;
-}
-
-.reminder-form {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-width: 320px;
-}
-
-.reminder-form input {
-  width: 100%;
-}
-
-.reminder-status {
-  margin: 10px 0 0;
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.reminder-status.overdue {
-  color: var(--danger);
-  font-weight: 600;
 }
 
 /* ---------- Calendário ---------- */
