@@ -18,7 +18,7 @@ export default function Login() {
     try {
       const data = await api.login(email, password);
       setSession(data.token, data.user);
-      navigate('/boards');
+      navigate('/calendar');
     } catch (err) {
       setError(err.message);
     } finally {

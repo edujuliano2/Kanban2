@@ -32,7 +32,7 @@ function RequireAuth({ children }) {
 function RedirectIfAuthed({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="page center">Carregando...</div>;
-  if (user) return <Navigate to="/boards" replace />;
+  if (user) return <Navigate to="/calendar" replace />;
   return children;
 }
 

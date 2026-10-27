@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { api } from '../api';
 import { memberColor } from '../colors';
 import { CATEGORIES, categoryOf } from '../categories';
@@ -53,6 +53,8 @@ function saveMessage(invite) {
 export default function CardDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromCalendar = location.state?.from === '/calendar';
 
   const [card, setCard] = useState(null);
   const [members, setMembers] = useState([]);
@@ -154,7 +156,7 @@ export default function CardDetail() {
     const boardId = card.board_id;
     try {
       await api.deleteCard(id);
-      navigate(`/board/${boardId}`);
+      navigate(fromCalendar ? '/calendar' : `/board/${boardId}`);
     } catch (err) {
       setError(err.message);
       setDeleting(false);
@@ -220,8 +222,11 @@ export default function CardDetail() {
     <div className="page">
       <header className="topbar">
         <div className="page-heading">
-          <Link to={`/board/${card.board_id}`} className="back-link">
-            ← {card.board_name || 'Voltar para a agenda'}
+          <Link
+            to={fromCalendar ? '/calendar' : `/board/${card.board_id}`}
+            className="back-link"
+          >
+            ← {fromCalendar ? 'Voltar para o calendário' : card.board_name || 'Voltar para a agenda'}
           </Link>
           <h1>Detalhes da atividade</h1>
         </div>

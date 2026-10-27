@@ -1,14 +1,16 @@
 # Agenda da Família
 
-Aplicação de agenda familiar que mantém a essência visual de um Kanban: cada coluna é um dia da semana e cada cartão é um compromisso. A rotina de toda a família fica visível de uma vez, e as atividades podem ser arrastadas entre os dias para serem remarcadas.
+Aplicação de agenda familiar com um calendário moderno como visão principal — nos modos **Mês**, **Semana** e **Dia** — e um quadro semanal no estilo Kanban para organizar e remarcar as atividades arrastando os cartões. A rotina de toda a família fica visível de uma vez.
 
 ## O que dá para fazer
 
 - **Uma família, vários logins**: cada pessoa pode criar a própria conta e entrar na mesma família usando um código de convite.
 - **Cadastrar a família** em `Família`, com nome, papel (mãe, pai, filha...), cor, emoji, e-mail para convites e telefone WhatsApp.
 - **Filtrar a agenda por pessoa** ou por categoria (escola, saúde, esporte, trabalho, lazer etc.).
-- **Visualizar a semana em colunas** de segunda a domingo, com navegação entre semanas.
-- **Visão Calendário** com todos os eventos e tarefas do mês agrupados por dia, mostrando somente os dias que têm atividades.
+- **Calendário como tela principal**, aberto logo após o login, com alternância entre **Mês**, **Semana** e **Dia**.
+- **Clique em qualquer dia para criar** um evento ou tarefa já com a data preenchida. Na visão do mês, o número do dia abre a visão detalhada daquele dia.
+- **Eventos e tarefas em cada dia**, com horário, participantes, categoria e local. Atividades da família e individuais ficam destacadas pelos participantes.
+- **Quadro semanal estilo Kanban** de segunda a domingo, com navegação entre semanas.
 - **Arrastar compromissos entre os dias** para mudar a data. A coluna **Sem data** funciona como caixa de entrada para organizar depois.
 - **Eventos com vários participantes**: uma consulta, viagem ou programa pode envolver mais de uma pessoa da família.
 - **Dois tipos de card**:
@@ -19,7 +21,7 @@ Aplicação de agenda familiar que mantém a essência visual de um Kanban: cada
 - **Cancelamento**: ao excluir um evento, os participantes recebem o cancelamento por e-mail.
 - **Conclusão de tarefas**: apenas tarefas podem ser concluídas; eventos não usam mais essa ação.
 - **Checklist "O que levar / preparar"** e **recados da família** em cada atividade.
-- **Resumo do dia** na tela inicial, reunindo eventos e tarefas de todas as agendas.
+- **Resumo do dia** na página de agendas, reunindo eventos e tarefas de todas as agendas.
 - **Múltiplas agendas** (por exemplo, "Rotina da família", "Escola das meninas", "Trabalho"), com nome e descrição editáveis.
 
 ## Como funcionam os logins da família

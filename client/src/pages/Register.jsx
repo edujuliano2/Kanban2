@@ -27,7 +27,7 @@ export default function Register() {
     try {
       const data = await api.register(name, email, password, inviteCode);
       setSession(data.token, data.user);
-      navigate('/boards');
+      navigate('/calendar');
     } catch (err) {
       setError(err.message);
     } finally {
