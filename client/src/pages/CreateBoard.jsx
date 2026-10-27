@@ -15,7 +15,7 @@ export default function CreateBoard() {
     setBusy(true);
     try {
       const board = await api.createBoard(name, description);
-      navigate(`/board/${board.id}`);
+      navigate(`/calendar?agenda=${board.id}`);
     } catch (err) {
       setError(err.message);
     } finally {

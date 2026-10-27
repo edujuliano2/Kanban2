@@ -39,7 +39,7 @@ export default function Boards() {
       <header className="topbar">
         <div>
           <h1>Agendas</h1>
-          <p className="muted">Selecione uma agenda para abrir ou crie uma nova.</p>
+          <p className="muted">Selecione uma agenda para abrir no calendário ou crie uma nova.</p>
         </div>
         <nav className="topbar-actions">
           <Link to="/create-board" className="btn primary">
@@ -67,9 +67,9 @@ export default function Boards() {
               className="board-card"
               role="button"
               tabIndex={0}
-              onClick={() => navigate(`/board/${board.id}`)}
+              onClick={() => navigate(`/calendar?agenda=${board.id}`)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') navigate(`/board/${board.id}`);
+                if (e.key === 'Enter') navigate(`/calendar?agenda=${board.id}`);
               }}
             >
               <div className="board-card-top">
@@ -92,7 +92,7 @@ export default function Boards() {
                 {board.description && <span>{board.description}</span>}
               </div>
 
-              <span className="board-card-link">Abrir agenda →</span>
+              <span className="board-card-link">Abrir no calendário →</span>
             </div>
           ))}
         </div>

@@ -1,5 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useSearchParams
+} from 'react-router-dom';
 import { api } from '../api';
 import ActivityModal from '../components/ActivityModal';
 import CalendarEventCard from '../components/CalendarEventCard';
@@ -41,6 +46,13 @@ function eventMemberIds(event) {
 
 export default function Calendar() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const agendaParam = searchParams.get('agenda');
+  const parsedAgendaId = agendaParam ? Number(agendaParam) : null;
+  const selectedBoardId =
+    Number.isFinite(parsedAgendaId) && parsedAgendaId > 0 ? parsedAgendaId : null;
 
   const [view, setView] = useState(() => {
     const saved = localStorage.getItem('agenda_calendar_view');
@@ -65,6 +77,10 @@ export default function Calendar() {
   const [showCreate, setShowCreate] = useState(false);
   const [createDate, setCreateDate] = useState(todayKey());
   const [deletingId, setDeletingId] = useState(null);
+
+  const selectedBoard = selectedBoardId
+    ? boards.find((board) => board.id === selectedBoardId) || null
+    : null;
 
   const range = useMemo(() => {
     if (view === 'month') {
@@ -112,6 +128,13 @@ export default function Calendar() {
   }, []);
 
   useEffect(() => {
+    if (!boardsLoaded || !selectedBoardId) return;
+    if (!boards.some((board) => board.id === selectedBoardId)) {
+      setSearchParams({}, { replace: true });
+    }
+  }, [boardsLoaded, boards, selectedBoardId, setSearchParams]);
+
+  useEffect(() => {
     let cancelled = false;
     setLoading(true);
 
@@ -143,6 +166,9 @@ export default function Calendar() {
   const filteredEvents = useMemo(
     () =>
       events.filter((event) => {
+        if (selectedBoardId && Number(event.board_id) !== selectedBoardId) {
+          return false;
+        }
         if (filterType !== 'all' && (event.card_type || 'event') !== filterType) {
           return false;
         }
@@ -160,7 +186,7 @@ export default function Calendar() {
         }
         return true;
       }),
-    [events, filterMember, filterType, filterCategory]
+    [events, selectedBoardId, filterMember, filterType, filterCategory]
   );
 
   const eventsByDate = useMemo(() => {
@@ -226,7 +252,15 @@ export default function Calendar() {
   }
 
   function openEvent(event) {
-    navigate(`/board/card/${event.id}`, { state: { from: '/calendar' } });
+    navigate(`/board/card/${event.id}`, {
+      state: { from: `${location.pathname}${location.search}` }
+    });
+  }
+
+  function clearAgenda() {
+    const next = new URLSearchParams(searchParams);
+    next.delete('agenda');
+    setSearchParams(next, { replace: true });
   }
 
   function handleCreated(created) {
@@ -399,6 +433,17 @@ export default function Calendar() {
           </div>
         )}
       </div>
+
+      {selectedBoard && (
+        <div className="calendar-agenda-banner">
+          <span>
+            Agenda selecionada: <strong>{selectedBoard.name}</strong>
+          </span>
+          <button type="button" className="btn text small" onClick={clearAgenda}>
+            Ver todas as agendas
+          </button>
+        </div>
+      )}
 
       {error && <p className="error">{error}</p>}
       {notice && <p className="notice">{notice}</p>}
@@ -703,7 +748,8 @@ export default function Calendar() {
           initialDate={createDate}
           initialType="event"
           defaultMemberId={filterMember !== 'all' ? Number(filterMember) : null}
-          defaultBoardId={boards.length === 1 ? boards[0].id : null}
+          defaultBoardId={selectedBoardId || (boards.length === 1 ? boards[0].id : null)}
+          lockBoard={Boolean(selectedBoardId)}
           onClose={() => setShowCreate(false)}
           onCreated={handleCreated}
         />

@@ -31,6 +31,7 @@ export default function ActivityModal({
   initialType = 'event',
   defaultMemberId = null,
   defaultBoardId = null,
+  lockBoard = false,
   onClose,
   onCreated
 }) {
@@ -188,6 +189,8 @@ export default function ActivityModal({
             <select
               value={form.board_id}
               onChange={(e) => setField('board_id', Number(e.target.value))}
+              disabled={lockBoard}
+              title={lockBoard ? 'Agenda selecionada no calendário' : undefined}
             >
               {boards.map((board) => (
                 <option key={board.id} value={board.id}>
@@ -195,6 +198,12 @@ export default function ActivityModal({
                 </option>
               ))}
             </select>
+            {lockBoard && (
+              <small className="field-hint">
+                A atividade será criada nesta agenda. Para escolher outra, use “Ver todas as
+                agendas” no calendário.
+              </small>
+            )}
           </label>
 
           <label className="field">

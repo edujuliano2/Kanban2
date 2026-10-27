@@ -1,11 +1,17 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+  useParams
+} from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth';
 import AppNav from './components/AppNav';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Boards from './pages/Boards';
 import CreateBoard from './pages/CreateBoard';
-import Board from './pages/Board';
 import CardDetail from './pages/CardDetail';
 import Calendar from './pages/Calendar';
 import Family from './pages/Family';
@@ -34,6 +40,11 @@ function RedirectIfAuthed({ children }) {
   if (loading) return <div className="page center">Carregando...</div>;
   if (user) return <Navigate to="/calendar" replace />;
   return children;
+}
+
+function LegacyBoardRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/calendar?agenda=${id}`} replace />;
 }
 
 export default function App() {
@@ -77,7 +88,7 @@ export default function App() {
             path="/board/:id"
             element={
               <RequireAuth>
-                <Board />
+                <LegacyBoardRedirect />
               </RequireAuth>
             }
           />

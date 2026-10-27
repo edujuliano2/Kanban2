@@ -54,7 +54,7 @@ export default function CardDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const fromCalendar = location.state?.from === '/calendar';
+  const fromCalendar = Boolean(location.state?.from?.startsWith('/calendar'));
 
   const [card, setCard] = useState(null);
   const [members, setMembers] = useState([]);
@@ -156,7 +156,9 @@ export default function CardDetail() {
     const boardId = card.board_id;
     try {
       await api.deleteCard(id);
-      navigate(fromCalendar ? '/calendar' : `/board/${boardId}`);
+      navigate(
+        fromCalendar ? location.state.from : `/calendar?agenda=${boardId}`
+      );
     } catch (err) {
       setError(err.message);
       setDeleting(false);
@@ -223,10 +225,16 @@ export default function CardDetail() {
       <header className="topbar">
         <div className="page-heading">
           <Link
-            to={fromCalendar ? '/calendar' : `/board/${card.board_id}`}
+            to={
+              fromCalendar
+                ? location.state.from
+                : card.board_id
+                  ? `/calendar?agenda=${card.board_id}`
+                  : '/calendar'
+            }
             className="back-link"
           >
-            ← {fromCalendar ? 'Voltar para o calendário' : card.board_name || 'Voltar para a agenda'}
+            ← Voltar para o calendário
           </Link>
           <h1>Detalhes da atividade</h1>
         </div>

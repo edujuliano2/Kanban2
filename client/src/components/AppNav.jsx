@@ -3,15 +3,10 @@ import { useAuth } from '../auth';
 
 export default function AppNav() {
   const { user } = useAuth();
-  const { pathname, state } = useLocation();
-  const fromCalendar =
-    pathname.startsWith('/board/card/') && state?.from === '/calendar';
-  const calendarActive = pathname.startsWith('/calendar') || fromCalendar;
-  const agendasActive =
-    !fromCalendar &&
-    (pathname === '/boards' ||
-      pathname === '/create-board' ||
-      pathname.startsWith('/board/'));
+  const { pathname } = useLocation();
+  const calendarActive =
+    pathname.startsWith('/calendar') || pathname.startsWith('/board/card/');
+  const agendasActive = pathname === '/boards' || pathname === '/create-board';
 
   return (
     <nav className="app-nav">

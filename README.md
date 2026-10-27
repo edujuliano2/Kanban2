@@ -1,6 +1,6 @@
 # Agenda da Família
 
-Aplicação de agenda familiar com um calendário moderno como visão principal — nos modos **Mês**, **Semana** e **Dia** — e um quadro semanal no estilo Kanban para organizar e remarcar as atividades arrastando os cartões. A rotina de toda a família fica visível de uma vez.
+Aplicação de agenda familiar com um calendário moderno como visão principal — nos modos **Mês**, **Semana** e **Dia** — organizada por agendas. A rotina de toda a família fica visível de uma vez.
 
 ## O que dá para fazer
 
@@ -10,8 +10,7 @@ Aplicação de agenda familiar com um calendário moderno como visão principal 
 - **Calendário como tela principal**, aberto logo após o login, com alternância entre **Mês**, **Semana** e **Dia**.
 - **Clique em qualquer dia para criar** um evento ou tarefa já com a data preenchida. Na visão do mês, o número do dia abre a visão detalhada daquele dia.
 - **Eventos e tarefas em cada dia**, com horário, participantes, categoria e local. Atividades da família e individuais ficam destacadas pelos participantes.
-- **Quadro semanal estilo Kanban** de segunda a domingo, com navegação entre semanas.
-- **Arrastar compromissos entre os dias** para mudar a data. A coluna **Sem data** funciona como caixa de entrada para organizar depois.
+- **Agenda selecionada no calendário**: ao escolher uma agenda na página Agendas, o calendário abre mostrando apenas os eventos e tarefas daquela agenda, com opção de voltar a ver todas.
 - **Eventos com vários participantes**: uma consulta, viagem ou programa pode envolver mais de uma pessoa da família.
 - **Dois tipos de card**:
   - **Evento**: tem data, horário, participantes e pode enviar convite de calendário.
@@ -21,8 +20,8 @@ Aplicação de agenda familiar com um calendário moderno como visão principal 
 - **Cancelamento**: ao excluir um evento, os participantes recebem o cancelamento por e-mail.
 - **Conclusão de tarefas**: apenas tarefas podem ser concluídas; eventos não usam mais essa ação.
 - **Checklist "O que levar / preparar"** e **recados da família** em cada atividade.
-- **Página de agendas** enxuta, apenas para selecionar uma agenda existente ou criar uma nova.
-- **Múltiplas agendas** (por exemplo, "Rotina da família", "Escola das meninas", "Trabalho"), com nome e descrição editáveis.
+- **Página de agendas** enxuta, para selecionar uma agenda existente, abrir o calendário dela ou criar uma nova.
+- **Múltiplas agendas** (por exemplo, "Rotina da família", "Escola das meninas", "Trabalho"), com nome e descrição.
 
 ## Como funcionam os logins da família
 
@@ -157,7 +156,7 @@ No banco:
 - `members` → pessoas da família (com ou sem login)
 - `checklist_items` e `comments` → checklist e recados
 
-Atividades antigas que não tinham data aparecem automaticamente na coluna **Sem data**. Basta arrastá-las para um dia para entrarem na rotina. A migração também cria uma família para cada conta antiga e vincula o usuário ao membro correspondente.
+Atividades antigas que não tinham data continuam preservadas no banco. A migração também cria uma família para cada conta antiga e vincula o usuário ao membro correspondente.
 
 ## Rodando localmente
 
