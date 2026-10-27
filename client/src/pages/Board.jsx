@@ -394,7 +394,6 @@ export default function Board() {
           <button type="button" className="btn" onClick={openEditModal}>
             Editar agenda
           </button>
-          <Link to="/family" className="btn">Família</Link>
           <button type="button" className="btn primary" onClick={openNewModal}>
             + Nova atividade
           </button>

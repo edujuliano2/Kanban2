@@ -21,7 +21,7 @@ Aplicação de agenda familiar com um calendário moderno como visão principal 
 - **Cancelamento**: ao excluir um evento, os participantes recebem o cancelamento por e-mail.
 - **Conclusão de tarefas**: apenas tarefas podem ser concluídas; eventos não usam mais essa ação.
 - **Checklist "O que levar / preparar"** e **recados da família** em cada atividade.
-- **Resumo do dia** na página de agendas, reunindo eventos e tarefas de todas as agendas.
+- **Página de agendas** enxuta, apenas para selecionar uma agenda existente ou criar uma nova.
 - **Múltiplas agendas** (por exemplo, "Rotina da família", "Escola das meninas", "Trabalho"), com nome e descrição editáveis.
 
 ## Como funcionam os logins da família
