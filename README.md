@@ -8,7 +8,7 @@ Aplicação de agenda familiar com um calendário moderno como visão principal 
 - **Cadastrar a família** em `Família`, com nome, papel (mãe, pai, filha...), cor, emoji, e-mail para convites e telefone WhatsApp.
 - **Filtrar a agenda por pessoa** ou por categoria (escola, saúde, esporte, trabalho, lazer etc.).
 - **Calendário como tela principal**, aberto logo após o login, com alternância entre **Mês**, **Semana** e **Dia**.
-- **Clique em qualquer dia para criar** um evento ou tarefa já com a data preenchida. Na visão do mês, o número do dia abre a visão detalhada daquele dia.
+- **Clique em um dia para abrir a visão do dia**. Para criar, use o botão **+** no dia (mês), na coluna (semana) ou na visão do dia; a data já vem preenchida.
 - **Eventos e tarefas em cada dia**, com horário, participantes, categoria e local. Atividades da família e individuais ficam destacadas pelos participantes.
 - **Agenda selecionada no calendário**: ao escolher uma agenda na página Agendas, o calendário abre mostrando apenas os eventos e tarefas daquela agenda, com opção de voltar a ver todas.
 - **Eventos com vários participantes**: uma consulta, viagem ou programa pode envolver mais de uma pessoa da família.

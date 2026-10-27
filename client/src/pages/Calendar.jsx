@@ -251,6 +251,11 @@ export default function Calendar() {
     setShowCreate(true);
   }
 
+  function openDay(date) {
+    setAnchor(date);
+    changeView('day');
+  }
+
   function openEvent(event) {
     navigate(`/board/card/${event.id}`, {
       state: { from: `${location.pathname}${location.search}` }
@@ -460,8 +465,7 @@ export default function Calendar() {
       ) : view === 'month' ? (
         <>
           <p className="calendar-hint muted small">
-            Clique em um dia para criar uma atividade. Clique no número do dia para abrir a
-            visão do dia.
+            Clique em um dia para abrir a visão do dia. Use o + para criar uma atividade.
           </p>
           <div className="month-view">
             <div className="month-weekdays">
@@ -485,14 +489,14 @@ export default function Calendar() {
                     }${isSelected ? ' selected' : ''}`}
                     role="button"
                     tabIndex={0}
-                    onClick={() => openCreate(day)}
+                    onClick={() => openDay(day)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        openCreate(day);
+                        openDay(day);
                       }
                     }}
-                    title="Clique para adicionar uma atividade"
+                    title="Clique para abrir o dia"
                   >
                     <div className="month-day-head">
                       <button
@@ -501,8 +505,7 @@ export default function Calendar() {
                         title="Abrir visão do dia"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setAnchor(day);
-                          changeView('day');
+                          openDay(day);
                         }}
                         onKeyDown={(e) => e.stopPropagation()}
                       >
@@ -540,8 +543,7 @@ export default function Calendar() {
                           className="month-more"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setAnchor(day);
-                            changeView('day');
+                            openDay(day);
                           }}
                           onKeyDown={(e) => e.stopPropagation()}
                         >
@@ -588,6 +590,7 @@ export default function Calendar() {
                   className={`week-strip-day${selected ? ' selected' : ''}${
                     isToday ? ' today' : ''
                   }`}
+                  title="Selecionar dia"
                   onClick={() => setAnchor(day)}
                 >
                   <span>{weekday.short}</span>
@@ -609,7 +612,16 @@ export default function Calendar() {
                 <section
                   key={key}
                   className={`week-day${selected ? ' is-selected' : ''}`}
-                  onClick={() => openCreate(day)}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openDay(day)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      openDay(day);
+                    }
+                  }}
+                  title="Clique para abrir o dia"
                 >
                   <header className="week-day-header">
                     <span>{weekday.long}</span>
@@ -636,6 +648,7 @@ export default function Calendar() {
                           e.stopPropagation();
                           openCreate(day);
                         }}
+                        onKeyDown={(e) => e.stopPropagation()}
                       >
                         + Adicionar
                       </button>
@@ -650,6 +663,7 @@ export default function Calendar() {
                         e.stopPropagation();
                         openCreate(day);
                       }}
+                      onKeyDown={(e) => e.stopPropagation()}
                     >
                       + Adicionar
                     </button>
@@ -673,21 +687,10 @@ export default function Calendar() {
           </div>
 
           {dayEvents.length === 0 ? (
-            <div
-              className="day-empty"
-              role="button"
-              tabIndex={0}
-              onClick={() => openCreate(anchor)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  openCreate(anchor);
-                }
-              }}
-            >
+            <div className="day-empty">
               <span className="day-empty-icon" aria-hidden="true">🗒️</span>
               <h3>Nenhuma atividade neste dia</h3>
-              <p className="muted">Clique para adicionar um evento ou tarefa.</p>
+              <p className="muted">Use o botão + para adicionar um evento ou tarefa.</p>
             </div>
           ) : (
             <>
